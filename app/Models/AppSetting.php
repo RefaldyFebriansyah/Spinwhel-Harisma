@@ -22,18 +22,14 @@ class AppSetting extends Model
      */
     public static function get(string $key, mixed $default = null): mixed
     {
-        try {
-            $setting = static::find($key);
-            if (! $setting) {
-                return $default;
-            }
-
-            $decoded = json_decode($setting->value, true);
-
-            return json_last_error() === JSON_ERROR_NONE ? $decoded : $setting->value;
-        } catch (\Throwable $e) {
+        $setting = static::find($key);
+        if (! $setting) {
             return $default;
         }
+
+        $decoded = json_decode($setting->value, true);
+
+        return json_last_error() === JSON_ERROR_NONE ? $decoded : $setting->value;
     }
 
     /**

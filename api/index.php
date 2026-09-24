@@ -1,84 +1,78 @@
 <?php
 
+use App\Models\WheelItem;
+use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
-use Illuminate\View\ViewServiceProvider;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 
-try {
-    // 1. Prepare writable /tmp directories for Vercel Serverless environment
-    $tmpDirs = [
-        '/tmp/storage/framework/views',
-        '/tmp/storage/framework/cache/data',
-        '/tmp/storage/framework/sessions',
-        '/tmp/storage/logs',
-        '/tmp/bootstrap/cache',
-        '/tmp/database',
-    ];
+// 1. Prepare writable /tmp directories for Vercel Serverless environment
+$tmpDirs = [
+    '/tmp/storage/framework/views',
+    '/tmp/storage/framework/cache',
+    '/tmp/storage/framework/sessions',
+    '/tmp/storage/logs',
+    '/tmp/bootstrap/cache',
+    '/tmp/database',
+];
 
-    foreach ($tmpDirs as $dir) {
-        if (! is_dir($dir)) {
-            @mkdir($dir, 0777, true);
-        }
+foreach ($tmpDirs as $dir) {
+    if (! is_dir($dir)) {
+        @mkdir($dir, 0777, true);
     }
-
-    // 2. Prepare writable SQLite Database in /tmp/database/database.sqlite
-    $tmpDbPath = '/tmp/database/database.sqlite';
-    $bundledDbPath = __DIR__.'/../database/database.sqlite';
-
-    if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
-        @copy($bundledDbPath, $tmpDbPath);
-    } elseif (! file_exists($tmpDbPath)) {
-        @touch($tmpDbPath);
-    }
-
-    // 3. Override Environment Variables for Vercel Serverless execution
-    putenv('APP_KEY=base64:pj8GOVGfD4zbNzq5aYv3VeDSMyhJpvG86hR1q5kit/g=');
-    putenv('APP_DEBUG=true');
-    putenv('LOG_CHANNEL=stderr');
-    putenv('DB_CONNECTION=sqlite');
-    putenv('DB_DATABASE='.$tmpDbPath);
-    putenv('SESSION_DRIVER=cookie');
-    putenv('CACHE_STORE=array');
-    putenv('QUEUE_CONNECTION=sync');
-    putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
-    putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
-    putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
-    putenv('APP_ROUTES_CACHE=/tmp/bootstrap/cache/routes-v7.php');
-    putenv('APP_CONFIG_CACHE=/tmp/bootstrap/cache/config.php');
-    putenv('APP_EVENTS_CACHE=/tmp/bootstrap/cache/events.php');
-
-    $_ENV['APP_KEY'] = 'base64:pj8GOVGfD4zbNzq5aYv3VeDSMyhJpvG86hR1q5kit/g=';
-    $_ENV['APP_DEBUG'] = 'true';
-    $_ENV['LOG_CHANNEL'] = 'stderr';
-    $_ENV['DB_CONNECTION'] = 'sqlite';
-    $_ENV['DB_DATABASE'] = $tmpDbPath;
-    $_ENV['SESSION_DRIVER'] = 'cookie';
-    $_ENV['CACHE_STORE'] = 'array';
-    $_ENV['QUEUE_CONNECTION'] = 'sync';
-    $_ENV['VIEW_COMPILED_PATH'] = '/tmp/storage/framework/views';
-    $_ENV['APP_SERVICES_CACHE'] = '/tmp/bootstrap/cache/services.php';
-    $_ENV['APP_PACKAGES_CACHE'] = '/tmp/bootstrap/cache/packages.php';
-    $_ENV['APP_ROUTES_CACHE'] = '/tmp/bootstrap/cache/routes-v7.php';
-    $_ENV['APP_CONFIG_CACHE'] = '/tmp/bootstrap/cache/config.php';
-    $_ENV['APP_EVENTS_CACHE'] = '/tmp/bootstrap/cache/events.php';
-
-    // Fix Vercel SCRIPT_NAME / SCRIPT_FILENAME so Laravel resolves routes dynamically
-    $_SERVER['SCRIPT_NAME'] = '/index.php';
-    $_SERVER['SCRIPT_FILENAME'] = __DIR__.'/../public/index.php';
-
-    // 4. Register Composer Autoloader & Bootstrap Laravel Application
-    require_once __DIR__.'/../vendor/autoload.php';
-    $app = require_once __DIR__.'/../bootstrap/app.php';
-
-    // 5. Explicitly register ViewServiceProvider for serverless response rendering
-    $app->register(ViewServiceProvider::class);
-
-    // 6. Handle HTTP Request
-    $app->handleRequest(Request::capture());
-} catch (Throwable $e) {
-    http_response_code(500);
-    header('Content-Type: text/plain');
-    echo "VERCEL ERROR DIAGNOSTIC:\n";
-    echo $e->getMessage()."\n\n";
-    echo $e->getFile().':'.$e->getLine()."\n\n";
-    echo $e->getTraceAsString();
 }
+
+// 2. Prepare writable SQLite Database in /tmp/database/database.sqlite
+$tmpDbPath = '/tmp/database/database.sqlite';
+$bundledDbPath = __DIR__.'/../database/database.sqlite';
+
+if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
+    @copy($bundledDbPath, $tmpDbPath);
+} elseif (! file_exists($tmpDbPath)) {
+    @touch($tmpDbPath);
+}
+
+// 3. Override Environment Variables for Vercel Serverless execution
+putenv('LOG_CHANNEL=stderr');
+putenv('DB_CONNECTION=sqlite');
+putenv('DB_DATABASE='.$tmpDbPath);
+putenv('SESSION_DRIVER=cookie');
+putenv('CACHE_STORE=file');
+putenv('QUEUE_CONNECTION=sync');
+putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
+putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
+putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
+putenv('APP_CONFIG_CACHE=/tmp/bootstrap/cache/config.php');
+putenv('APP_ROUTES_CACHE=/tmp/bootstrap/cache/routes.php');
+
+$_ENV['LOG_CHANNEL'] = 'stderr';
+$_ENV['DB_CONNECTION'] = 'sqlite';
+$_ENV['DB_DATABASE'] = $tmpDbPath;
+$_ENV['SESSION_DRIVER'] = 'cookie';
+$_ENV['CACHE_STORE'] = 'file';
+$_ENV['QUEUE_CONNECTION'] = 'sync';
+
+// 4. Register Composer Autoloader & Bootstrap Laravel Application
+require_once __DIR__.'/../vendor/autoload.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+// 5. Automatic Fallback: Auto-migrate & Auto-seed database if WheelItem count is 0
+try {
+    if (! Schema::hasTable('wheel_items') || WheelItem::count() === 0) {
+        Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
+    }
+} catch (Throwable $e) {
+    try {
+        Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
+    } catch (Throwable $ex) {
+        // Ignore fallback errors
+    }
+}
+
+// 6. Handle HTTP Request
+$kernel = $app->make(Kernel::class);
+$response = $kernel->handle(
+    $request = Request::capture()
+);
+$response->send();
+$kernel->terminate($request, $response);

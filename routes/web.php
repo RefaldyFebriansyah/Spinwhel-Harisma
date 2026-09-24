@@ -11,11 +11,8 @@ use Illuminate\Support\Facades\Route;
 */
 Route::get('/', [PublicSpinwheelController::class, 'index'])->name('stage');
 Route::get('/api/categories/{slug}/items', [PublicSpinwheelController::class, 'getItems'])->name('api.items');
-Route::get('/categories/{slug}/items', [PublicSpinwheelController::class, 'getItems']);
 Route::post('/api/spin/record', [PublicSpinwheelController::class, 'recordWinner'])->name('api.spin.record');
-Route::post('/spin/record', [PublicSpinwheelController::class, 'recordWinner']);
 Route::post('/api/items/{item}/toggle', [PublicSpinwheelController::class, 'toggleItem'])->name('api.items.toggle');
-Route::post('/items/{item}/toggle', [PublicSpinwheelController::class, 'toggleItem']);
 Route::get('/export/print-pdf', [PublicSpinwheelController::class, 'printMasterPdf'])->name('export.print-pdf');
 
 /*
@@ -30,6 +27,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/items', [AdminDashboardController::class, 'items'])->name('items.index');
     Route::post('/items', [AdminDashboardController::class, 'storeItem'])->name('items.store');
     Route::put('/items/{item}', [AdminDashboardController::class, 'updateItem'])->name('items.update');
+    Route::delete('/items/clear-all', [AdminDashboardController::class, 'clearAllItems'])->name('items.clear-all');
     Route::delete('/items/{item}', [AdminDashboardController::class, 'destroyItem'])->name('items.destroy');
     Route::post('/items/bulk-import', [AdminDashboardController::class, 'bulkImport'])->name('items.bulk-import');
 

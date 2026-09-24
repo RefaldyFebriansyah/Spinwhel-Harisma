@@ -17,11 +17,7 @@ class PublicSpinwheelController extends Controller
      */
     public function index(Request $request): View
     {
-        $categories = collect();
-        try {
-            $categories = Category::where('is_active', true)->with('activeWheelItems')->get();
-        } catch (\Throwable $e) {
-        }
+        $categories = Category::where('is_active', true)->with('activeWheelItems')->get();
 
         if ($categories->isEmpty()) {
             $categories = collect([
