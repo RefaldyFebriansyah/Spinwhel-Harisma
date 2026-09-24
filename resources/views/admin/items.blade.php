@@ -94,7 +94,7 @@
         </div>
 
         <!-- Table -->
-        <div class="overflow-x-auto">
+        <div class="overflow-x-auto min-h-[220px]">
             <table class="w-full text-left text-xs text-zinc-200">
                 <thead class="bg-[#141622] text-zinc-400 uppercase text-[10px] font-bold border-b border-zinc-800">
                     <tr>
@@ -141,38 +141,54 @@
                                 </span>
                             </td>
 
-                            <!-- Sleek Inline Action Buttons -->
+                            <!-- 3-Dots Vertical Action Dropdown Menu -->
                             <td class="py-3 px-4 text-right">
-                                <div class="flex items-center justify-end space-x-2">
-                                    <button @click="
-                                        editItemData = { 
-                                            id: {{ $item->id }}, 
-                                            category_id: '{{ $item->category_id }}', 
-                                            title: '{{ addslashes($item->title) }}', 
-                                            subtitle: '{{ addslashes($item->subtitle ?? '') }}', 
-                                            class_level: '{{ $item->class_level ?? 'Kelas X' }}', 
-                                            color: '{{ $item->color }}', 
-                                            text_color: '{{ $item->text_color }}', 
-                                            weight: {{ $item->weight }}, 
-                                            is_active: {{ $item->is_active ? 'true' : 'false' }} 
-                                        }; 
-                                        editModalOpen = true;" 
-                                        class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-semibold text-xs transition flex items-center space-x-1.5 shadow-sm"
-                                        title="Edit Peserta">
-                                        <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
-                                        <span>Edit</span>
+                                <div x-data="{ open: false }" class="relative inline-block text-left">
+                                    <button @click="open = !open" @click.outside="open = false" 
+                                            class="p-2 rounded-lg bg-[#141622] hover:bg-amber-500/20 text-zinc-300 hover:text-amber-300 transition border border-zinc-700/80 shadow-sm focus:outline-none focus:ring-2 focus:ring-amber-500/40"
+                                            title="Aksi Peserta">
+                                        <i data-lucide="more-vertical" class="w-4 h-4"></i>
                                     </button>
 
-                                    <form action="{{ route('admin.items.destroy', $item) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus peserta ini?')" class="inline-block">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" 
-                                                class="px-2.5 py-1.5 rounded-lg bg-rose-950/60 hover:bg-rose-900 text-rose-300 border border-rose-500/30 font-semibold text-xs transition flex items-center space-x-1.5 shadow-sm"
-                                                title="Hapus Peserta">
-                                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                                            <span>Hapus</span>
+                                    <!-- Smart Dropdown Menu (Pops upwards on bottom rows, downwards on top rows) -->
+                                    <div x-show="open" 
+                                         x-transition:enter="transition ease-out duration-100"
+                                         x-transition:enter-start="transform opacity-0 scale-95"
+                                         x-transition:enter-end="transform opacity-100 scale-100"
+                                         x-transition:leave="transition ease-in duration-75"
+                                         x-transition:leave-start="transform opacity-100 scale-100"
+                                         x-transition:leave-end="transform opacity-0 scale-95"
+                                         x-cloak
+                                         class="absolute right-0 z-50 {{ $loop->remaining < 2 ? 'bottom-full mb-1' : 'top-full mt-1' }} w-40 rounded-xl bg-[#121422] border border-zinc-700/80 shadow-2xl p-1.5 space-y-1 text-left">
+                                        
+                                        <button @click="
+                                            editItemData = { 
+                                                id: {{ $item->id }}, 
+                                                category_id: '{{ $item->category_id }}', 
+                                                title: '{{ addslashes($item->title) }}', 
+                                                subtitle: '{{ addslashes($item->subtitle ?? '') }}', 
+                                                class_level: '{{ $item->class_level ?? 'Kelas X' }}', 
+                                                color: '{{ $item->color }}', 
+                                                text_color: '{{ $item->text_color }}', 
+                                                weight: {{ $item->weight }}, 
+                                                is_active: {{ $item->is_active ? 'true' : 'false' }} 
+                                            }; 
+                                            editModalOpen = true;
+                                            open = false;" 
+                                            class="w-full flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-amber-300 hover:bg-amber-500/10 rounded-lg transition">
+                                            <i data-lucide="edit-3" class="w-3.5 h-3.5"></i>
+                                            <span>Edit Peserta</span>
                                         </button>
-                                    </form>
+
+                                        <form action="{{ route('admin.items.destroy', $item) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus peserta ini?')">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="w-full flex items-center space-x-2 px-3 py-2 text-xs font-semibold text-rose-400 hover:bg-rose-950/60 rounded-lg transition">
+                                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                                <span>Hapus Peserta</span>
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </td>
                         </tr>
