@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+
+@theme {
+    --font-serif: 'Cinzel', serif;
+    --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+    
+    --color-dark-bg: #090A0F;
+    --color-dark-card: #14151B;
+    --color-dark-border: #27272A;
+    --color-gold-accent: #D4AF37;
+    --color-gold-hover: #EAB308;
+}
+
+/* Authentic Indonesian Batik Backdrop Overlay */
+.bg-batik-pattern {
+    background-color: #0B0C10;
+    background-image: 
+        linear-gradient(180deg, rgba(11, 12, 16, 0.85) 0%, rgba(6, 7, 9, 0.92) 100%),
+        url('/images/batik-bg.jpg');
+    background-size: cover, 600px 338px;
+    background-repeat: no-repeat, repeat;
+    background-attachment: fixed;
+}
+
+.bg-batik-dark-pattern {
+    background-color: #08090C;
+    background-image: 
+        linear-gradient(180deg, rgba(8, 9, 12, 0.88) 0%, rgba(5, 6, 8, 0.95) 100%),
+        url('/images/batik-bg.jpg');
+    background-size: cover, 600px 338px;
+    background-repeat: no-repeat, repeat;
+    background-attachment: fixed;
+}
+
+/* Premium Stage Panels & Trim */
+.stage-card-glow {
+    background: rgba(16, 18, 27, 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+    border-radius: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.stage-card-glow:hover {
+    border-color: rgba(212, 175, 55, 0.4);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(212, 175, 55, 0.06);
+}
+
+.gold-glow-ring {
+    box-shadow: 0 0 30px rgba(212, 175, 55, 0.25), inset 0 0 15px rgba(212, 175, 55, 0.1);
+}
+
+.gold-gradient-text {
+    background: linear-gradient(135deg, #FFF8DC 0%, #D4AF37 50%, #997A15 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+@keyframes pulseGlow {
+    0%, 100% {
+        box-shadow: 0 0 25px rgba(234, 179, 8, 0.4), 0 0 45px rgba(234, 179, 8, 0.15);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(234, 179, 8, 0.8), 0 0 70px rgba(234, 179, 8, 0.35);
+    }
+}
+
+.animate-pulse-glow {
+    animation: pulseGlow 2.2s infinite ease-in-out;
+}
+
+@keyframes slideUpFade {
+    from {
+        opacity: 0;
+        transform: translateY(14px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-slide-up {
+    animation: slideUpFade 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+
+
