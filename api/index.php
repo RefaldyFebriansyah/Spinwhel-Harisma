@@ -32,7 +32,7 @@ if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
     @touch($tmpDbPath);
 }
 
-// 3. Override Environment Variables & Fix Server Script Variables for Vercel Serverless execution
+// 3. Override Environment Variables for Vercel Serverless execution (No route caching traps!)
 putenv('LOG_CHANNEL=stderr');
 putenv('DB_CONNECTION=sqlite');
 putenv('DB_DATABASE='.$tmpDbPath);
@@ -40,10 +40,6 @@ putenv('SESSION_DRIVER=cookie');
 putenv('CACHE_STORE=file');
 putenv('QUEUE_CONNECTION=sync');
 putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
-putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
-putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
-putenv('APP_CONFIG_CACHE=/tmp/bootstrap/cache/config.php');
-putenv('APP_ROUTES_CACHE=/tmp/bootstrap/cache/routes.php');
 
 $_ENV['LOG_CHANNEL'] = 'stderr';
 $_ENV['DB_CONNECTION'] = 'sqlite';
@@ -52,7 +48,7 @@ $_ENV['SESSION_DRIVER'] = 'cookie';
 $_ENV['CACHE_STORE'] = 'file';
 $_ENV['QUEUE_CONNECTION'] = 'sync';
 
-// Fix Vercel's SCRIPT_NAME so Laravel route matching doesn't strip the /api prefix
+// Fix Vercel SCRIPT_NAME / SCRIPT_FILENAME so Laravel resolves routes dynamically
 $_SERVER['SCRIPT_NAME'] = '/index.php';
 $_SERVER['SCRIPT_FILENAME'] = __DIR__.'/../public/index.php';
 

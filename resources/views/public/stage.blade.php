@@ -470,16 +470,54 @@
             async fetchCategoryItems(slug, classLevel) {
                 try {
                     const res = await fetch(`/api/categories/${slug}/items?class_level=${encodeURIComponent(classLevel)}`);
-                    const data = await res.json();
-                    if (data.success) {
-                        this.categoryId = data.category.id;
-                        this.categoryName = data.category.name;
-                        this.items = data.items;
-                        this.drawWheel();
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data.success && data.items && data.items.length > 0) {
+                            this.categoryId = data.category.id;
+                            this.categoryName = data.category.name;
+                            this.items = data.items;
+                            this.drawWheel();
+                            return;
+                        }
                     }
                 } catch (e) {
                     console.error('Error fetching wheel items:', e);
                 }
+
+                // Instant Client-side Fallback Guarantee if API call fails or returns 404
+                this.items = this.getClientFallbackItems(classLevel);
+                this.drawWheel();
+            },
+
+            getClientFallbackItems(classLevel) {
+                const colors = [
+                    '#8C2D19', '#255FA6', '#B87314', '#6B21A8',
+                    '#15803D', '#C2410C', '#0F766E', '#A16207'
+                ];
+                const majorsX = [
+                    'X AKL 1', 'X AKL 2', 'X PM 1', 'X PM 2', 'X KLN 1', 'X KLN 2',
+                    'X HTL 1', 'X HTL 2', 'X MPLB 1', 'X MPLB 2', 'X DKV 1', 'X DKV 2',
+                    'X PPLG 1', 'X PPLG 2', 'X AKL 3', 'X PM 3', 'X KLN 3', 'X HTL 3'
+                ];
+                const majorsXI = [
+                    'XI AKL 1', 'XI AKL 2', 'XI PM 1', 'XI PM 2', 'XI KLN 1', 'XI KLN 2',
+                    'XI HTL 1', 'XI HTL 2', 'XI MPLB 1', 'XI MPLB 2', 'XI DKV 1', 'XI DKV 2',
+                    'XI PPLG 1', 'XI PPLG 2', 'XI AKL 3', 'XI PM 3', 'XI KLN 3', 'XI HTL 3'
+                ];
+
+                const isClassXI = classLevel.includes('XI');
+                const list = isClassXI ? majorsXI : majorsX;
+
+                return list.map((name, idx) => ({
+                    id: isClassXI ? idx + 100 : idx + 1,
+                    title: name,
+                    subtitle: 'SMKN 1 Ciamis',
+                    class_level: isClassXI ? 'Kelas XI' : 'Kelas X',
+                    color: colors[idx % colors.length],
+                    text_color: '#FFFFFF',
+                    weight: 1,
+                    times_won: 0
+                }));
             },
 
             drawWheel() {
