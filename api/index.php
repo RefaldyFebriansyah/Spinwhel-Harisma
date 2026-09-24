@@ -1,5 +1,11 @@
 <?php
 
+use App\Models\WheelItem;
+use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
+
 // 1. Prepare writable /tmp directories for Vercel Serverless environment
 $tmpDirs = [
     '/tmp/storage/framework/views',
@@ -16,7 +22,7 @@ foreach ($tmpDirs as $dir) {
     }
 }
 
-// 2. Always sync bundled SQLite database (155 KB) to /tmp/database/database.sqlite
+// 2. Prepare writable SQLite Database in /tmp/database/database.sqlite
 $tmpDbPath = '/tmp/database/database.sqlite';
 $bundledDbPath = __DIR__.'/../database/database.sqlite';
 
@@ -46,5 +52,26 @@ $_ENV['SESSION_DRIVER'] = 'cookie';
 $_ENV['CACHE_STORE'] = 'file';
 $_ENV['QUEUE_CONNECTION'] = 'sync';
 
-// 4. Forward request to Laravel public/index.php
-require __DIR__.'/../public/index.php';
+// 4. Bootstrap Laravel Application
+$app = require __DIR__.'/../bootstrap/app.php';
+
+// 5. Automatic Fallback: Auto-migrate & Auto-seed database if WheelItem count is 0
+try {
+    if (! Schema::hasTable('wheel_items') || WheelItem::count() === 0) {
+        Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
+    }
+} catch (Throwable $e) {
+    try {
+        Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
+    } catch (Throwable $ex) {
+        // Ignore fallback errors
+    }
+}
+
+// 6. Handle HTTP Request
+$kernel = $app->make(Kernel::class);
+$response = $kernel->handle(
+    $request = Request::capture()
+);
+$response->send();
+$kernel->terminate($request, $response);
