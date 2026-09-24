@@ -237,7 +237,7 @@
                     </div>
                     <div class="text-right flex-shrink-0">
                         <span class="text-xs px-2.5 py-0.5 rounded bg-[#141622] border border-zinc-800 text-amber-300 font-mono font-bold"
-                              x-text="currentDrawnList.length + ' / ' + items.length + ' Terundi'"></span>
+                              x-text="currentDrawnList.length + ' / ' + (items.length + currentDrawnList.length) + ' Terundi'"></span>
                     </div>
                 </div>
 
@@ -490,6 +490,7 @@
                             } else {
                                 this.drawnWinnersXI = formatted;
                             }
+                            this.items = [];
                         }
 
                         this.drawWheel();
@@ -673,10 +674,9 @@
 
                 this.spinCount++;
 
-                if (this.autoRemoveWinner) {
-                    this.items = [];
-                    this.drawWheel();
-                }
+                // Always clear wheel items upon draw completion
+                this.items = [];
+                this.drawWheel();
 
                 const titlesSummary = shuffledList.map((item, idx) => `Urutan ${idx + 1}: ${item.title} (${item.subtitle || item.class_level})`).join(' | ');
 
@@ -736,6 +736,10 @@
 
                 this.spinCount += shuffled.length;
 
+                // Always clear wheel items upon draw completion
+                this.items = [];
+                this.drawWheel();
+
                 const titlesSummary = shuffled.map((item, idx) => `Urutan ${idx + 1}: ${item.title} (${item.subtitle || item.class_level})`).join(' | ');
 
                 try {
@@ -759,16 +763,28 @@
                     console.error('Error saving spin result:', e);
                 }
 
-                if (this.autoRemoveWinner) {
-                    this.items = [];
-                    this.drawWheel();
-                }
-
                 this.showCelebrationModal = true;
             },
 
-            resetDrawnSequence() {
+            async resetDrawnSequence() {
                 if (this.isSpinning) return;
+
+                try {
+                    await fetch('/api/spin/reset', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            category_id: this.categoryId,
+                            class_level: this.selectedClass
+                        })
+                    });
+                } catch (e) {
+                    console.error('Error resetting spin:', e);
+                }
+
                 if (this.selectedClass === 'Kelas X') {
                     this.drawnWinnersX = [];
                 } else {
@@ -776,7 +792,7 @@
                 }
                 this.spinCount = 1;
                 this.showCelebrationModal = false;
-                this.fetchCategoryItems(this.activeSlug, this.selectedClass);
+                await this.fetchCategoryItems(this.activeSlug, this.selectedClass);
             },
 
             // MASTER INTERLEAVED EXPORT: Combines Rank 1 of X, Rank 1 of XI, Rank 2 of X, Rank 2 of XI...

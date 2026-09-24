@@ -150,6 +150,30 @@ class PublicSpinwheelController extends Controller
     }
 
     /**
+     * Reset spin history and reactivate items for a specific category and class level.
+     */
+    public function resetCategorySpin(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'category_id' => 'required|exists:categories,id',
+            'class_level' => 'required|string',
+        ]);
+
+        SpinHistory::where('category_id', $validated['category_id'])
+            ->where('class_level', $validated['class_level'])
+            ->delete();
+
+        WheelItem::where('category_id', $validated['category_id'])
+            ->where('class_level', $validated['class_level'])
+            ->update(['is_active' => true]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Riwayat undian berhasil direset.',
+        ]);
+    }
+
+    /**
      * Helper to parse history items for a category and class level.
      */
     private function getParsedSpinSequence(int $categoryId, string $classLevel): array

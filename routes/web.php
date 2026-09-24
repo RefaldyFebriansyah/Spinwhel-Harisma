@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PublicSpinwheelController::class, 'index'])->name('stage');
 Route::get('/api/categories/{slug}/items', [PublicSpinwheelController::class, 'getItems'])->name('api.items');
 Route::post('/api/spin/record', [PublicSpinwheelController::class, 'recordWinner'])->name('api.spin.record');
+Route::post('/api/spin/reset', [PublicSpinwheelController::class, 'resetCategorySpin'])->name('api.spin.reset');
 Route::post('/api/items/{item}/toggle', [PublicSpinwheelController::class, 'toggleItem'])->name('api.items.toggle');
 Route::get('/export/print-pdf', [PublicSpinwheelController::class, 'printMasterPdf'])->name('export.print-pdf');
 
