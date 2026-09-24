@@ -93,6 +93,17 @@ class AdminDashboardController extends Controller
 
         $validated['is_active'] = $request->has('is_active');
 
+        if ($request->boolean('apply_all_categories')) {
+            $categories = Category::all();
+            foreach ($categories as $cat) {
+                $itemData = $validated;
+                $itemData['category_id'] = $cat->id;
+                WheelItem::create($itemData);
+            }
+
+            return redirect()->back()->with('success', 'Peserta berhasil ditambahkan ke 3 Mata Lomba sekaligus!');
+        }
+
         WheelItem::create($validated);
 
         return redirect()->back()->with('success', 'Peserta/Item berhasil ditambahkan!');
@@ -132,6 +143,34 @@ class AdminDashboardController extends Controller
     }
 
     /**
+     * Delete All Wheel Items (Truncate / Filtered Clear).
+     */
+    public function destroyAllItems(Request $request): RedirectResponse
+    {
+        $categoryId = $request->input('category_id');
+        $classLevel = $request->input('class_level');
+
+        $query = WheelItem::query();
+
+        if ($categoryId) {
+            $query->where('category_id', $categoryId);
+        }
+
+        if ($classLevel) {
+            $query->where('class_level', $classLevel);
+        }
+
+        $count = $query->count();
+        $query->delete();
+
+        $msg = ($categoryId || $classLevel)
+            ? "Sebanyak {$count} peserta sesuai filter berhasil dihapus!"
+            : "Seluruh ({$count}) data peserta dari semua cabang lomba berhasil dihapus!";
+
+        return redirect()->back()->with('success', $msg);
+    }
+
+    /**
      * Bulk Import items (Line by line text or CSV).
      */
     public function bulkImport(Request $request): RedirectResponse
@@ -143,16 +182,19 @@ class AdminDashboardController extends Controller
             'csv_file' => 'nullable|file|mimes:csv,txt|max:2048',
         ]);
 
-        $categoryId = $request->category_id;
+        $targetCategories = $request->boolean('apply_all_categories')
+            ? Category::all()
+            : Category::where('id', $request->category_id)->get();
+
         $classLevel = $request->class_level;
-        $itemsToCreate = [];
+        $parsedEntries = [];
 
         $presetColors = ['#8C2D19', '#255FA6', '#B87314', '#6B21A8', '#15803D', '#C2410C', '#0F766E', '#A16207'];
 
         if ($request->hasFile('csv_file')) {
             $path = $request->file('csv_file')->getRealPath();
             $file = fopen($path, 'r');
-            $header = fgetcsv($file); // Check if header exists
+            fgetcsv($file); // Skip header row if present
 
             $colorIdx = 0;
             while (($row = fgetcsv($file)) !== false) {
@@ -165,17 +207,11 @@ class AdminDashboardController extends Controller
                 $color = $presetColors[$colorIdx % count($presetColors)];
                 $colorIdx++;
 
-                $itemsToCreate[] = [
-                    'category_id' => $categoryId,
+                $parsedEntries[] = [
                     'title' => $title,
                     'subtitle' => $subtitle,
                     'class_level' => $rowClass,
                     'color' => $color,
-                    'text_color' => '#FFFFFF',
-                    'weight' => 1,
-                    'is_active' => true,
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ];
             }
             fclose($file);
@@ -194,12 +230,24 @@ class AdminDashboardController extends Controller
                 $color = $presetColors[$colorIdx % count($presetColors)];
                 $colorIdx++;
 
-                $itemsToCreate[] = [
-                    'category_id' => $categoryId,
+                $parsedEntries[] = [
                     'title' => $title,
                     'subtitle' => $subtitle,
                     'class_level' => $classLevel,
                     'color' => $color,
+                ];
+            }
+        }
+
+        $itemsToCreate = [];
+        foreach ($targetCategories as $cat) {
+            foreach ($parsedEntries as $entry) {
+                $itemsToCreate[] = [
+                    'category_id' => $cat->id,
+                    'title' => $entry['title'],
+                    'subtitle' => $entry['subtitle'],
+                    'class_level' => $entry['class_level'],
+                    'color' => $entry['color'],
                     'text_color' => '#FFFFFF',
                     'weight' => 1,
                     'is_active' => true,
@@ -212,7 +260,11 @@ class AdminDashboardController extends Controller
         if (count($itemsToCreate) > 0) {
             WheelItem::insert($itemsToCreate);
 
-            return redirect()->back()->with('success', count($itemsToCreate)." peserta/item {$classLevel} berhasil di-import!");
+            $msg = $request->boolean('apply_all_categories')
+                ? count($parsedEntries)." peserta {$classLevel} berhasil di-import sekaligus ke ALL 3 Mata Lomba (Total ".count($itemsToCreate).' item dibuat)!'
+                : count($itemsToCreate)." peserta/item {$classLevel} berhasil di-import!";
+
+            return redirect()->back()->with('success', $msg);
         }
 
         return redirect()->back()->with('error', 'Tidak ada data valid yang dapat di-import.');

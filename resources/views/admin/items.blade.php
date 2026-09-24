@@ -47,7 +47,17 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex items-center space-x-2.5">
+        <div class="flex flex-wrap items-center gap-2">
+            <form action="{{ route('admin.items.destroy-all') }}" method="POST" onsubmit="return confirm('⚠️ APAKAH ANDA YAKIN INGIN MENGHAPUS SEMUA PESERTA?\nSemua data peserta untuk kategori/filter ini (atau seluruhnya) akan dihapus permanen!')">
+                @csrf
+                <input type="hidden" name="category_id" value="{{ $activeCategory?->id }}">
+                <input type="hidden" name="class_level" value="{{ request('class_level') }}">
+                <button type="submit" class="px-3.5 py-2 rounded-lg bg-rose-950/80 hover:bg-rose-900 text-rose-300 hover:text-rose-100 font-bold text-xs transition-all border border-rose-500/40 flex items-center space-x-1.5 shadow-sm">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    <span>Hapus Semua Peserta</span>
+                </button>
+            </form>
+
             <button @click="bulkModalOpen = true" class="px-4 py-2 rounded-lg bg-[#161826] hover:bg-[#1D2033] text-amber-300 hover:text-amber-200 font-bold text-xs transition-all shadow-md border border-amber-500/30 flex items-center space-x-2 transform hover:-translate-y-0.5 active:translate-y-0">
                 <i data-lucide="file-up" class="w-4 h-4"></i>
                 <span>Bulk Import 18+ Nama</span>
@@ -248,7 +258,15 @@
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-2 pt-2">
+                <div class="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" name="apply_all_categories" id="apply_all_add" value="1" class="w-4 h-4 accent-amber-500 cursor-pointer">
+                        <label for="apply_all_add" class="text-xs font-bold text-amber-200 cursor-pointer">Tambahkan ke 3 Mata Lomba Sekaligus</label>
+                    </div>
+                    <p class="text-[10px] text-zinc-400 pl-6">Peserta ini akan otomatis didaftarkan ke Solo Vocal, Tari Tradisional, dan Baca Puisi.</p>
+                </div>
+
+                <div class="flex items-center space-x-2 pt-1">
                     <input type="checkbox" name="is_active" id="is_active_add" checked value="1" class="w-4 h-4 accent-amber-500">
                     <label for="is_active_add" class="text-xs text-zinc-300">Aktifkan peserta di roda spinwheel</label>
                 </div>
@@ -367,6 +385,14 @@ Denny Firmansyah (04)
                 <div>
                     <label class="block text-xs font-semibold text-zinc-300 mb-1">Atau Upload File CSV</label>
                     <input type="file" name="csv_file" accept=".csv,.txt" class="w-full text-xs text-zinc-300 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-xs file:font-bold file:bg-amber-500 file:text-zinc-950 hover:file:brightness-110 cursor-pointer">
+                </div>
+
+                <div class="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-1">
+                    <div class="flex items-center space-x-2">
+                        <input type="checkbox" name="apply_all_categories" id="apply_all_bulk" value="1" class="w-4 h-4 accent-amber-500 cursor-pointer">
+                        <label for="apply_all_bulk" class="text-xs font-bold text-amber-200 cursor-pointer">Import sekaligus ke 3 Mata Lomba</label>
+                    </div>
+                    <p class="text-[10px] text-zinc-400 pl-6">Semua peserta di atas akan di-import langsung ke Solo Vocal, Tari Tradisional, dan Baca Puisi.</p>
                 </div>
 
                 <div class="flex items-center justify-end space-x-3 pt-4 border-t border-zinc-800">

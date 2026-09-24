@@ -18,30 +18,17 @@ class PublicSpinwheelController extends Controller
     public function index(Request $request): View
     {
         $categories = Category::where('is_active', true)->with('activeWheelItems')->get();
-
-        if ($categories->isEmpty()) {
-            $categories = collect([
-                (object) ['id' => 1, 'name' => 'Solo Vocal', 'slug' => 'solo-vocal', 'icon' => 'mic', 'is_active' => true],
-                (object) ['id' => 2, 'name' => 'Tari Modern', 'slug' => 'tari-modern', 'icon' => 'sparkles', 'is_active' => true],
-                (object) ['id' => 3, 'name' => 'Sketching', 'slug' => 'sketching', 'icon' => 'palette', 'is_active' => true],
-            ]);
-        }
-
         $selectedSlug = $request->query('category', $categories->first()?->slug ?? 'solo-vocal');
         $activeCategory = $categories->firstWhere('slug', $selectedSlug) ?? $categories->first();
         $selectedClass = $request->query('class_level', 'Semua Kelas');
 
         $engineConfig = AppSetting::getEngineConfig();
 
-        $histories = collect();
-        try {
-            $histories = SpinHistory::with('category')
-                ->where('category_id', $activeCategory?->id)
-                ->latest('spun_at')
-                ->take(30)
-                ->get();
-        } catch (\Throwable $e) {
-        }
+        $histories = SpinHistory::with('category')
+            ->where('category_id', $activeCategory?->id)
+            ->latest('spun_at')
+            ->take(30)
+            ->get();
 
         return view('public.stage', compact('categories', 'activeCategory', 'selectedClass', 'engineConfig', 'histories'));
     }
@@ -51,107 +38,28 @@ class PublicSpinwheelController extends Controller
      */
     public function getItems(Request $request, string $slug): JsonResponse
     {
-        $category = null;
-        try {
-            $category = Category::where('slug', $slug)->first();
-        } catch (\Throwable $e) {
-        }
-
+        $category = Category::where('slug', $slug)->firstOrFail();
         $classLevel = $request->query('class_level', 'Semua Kelas');
-        $items = collect();
 
-        if ($category) {
-            $query = WheelItem::where('category_id', $category->id)->where('is_active', true);
+        $query = WheelItem::where('category_id', $category->id)->where('is_active', true);
 
-            if ($classLevel !== 'Semua Kelas' && ! empty($classLevel)) {
-                $cleanClass = trim($classLevel);
-                $query->where(function ($q) use ($cleanClass) {
-                    $q->where('class_level', $cleanClass)
-                        ->orWhere('class_level', 'LIKE', '%'.$cleanClass.'%');
-                });
-            }
-
-            $items = $query->orderBy('id', 'asc')
-                ->get(['id', 'title', 'subtitle', 'class_level', 'color', 'text_color', 'weight', 'times_won']);
+        if ($classLevel !== 'Semua Kelas' && ! empty($classLevel)) {
+            $query->where('class_level', $classLevel);
         }
 
-        // 🌟 HARDCODED FALLBACK GUARANTEE if database returns 0 items:
-        if ($items->isEmpty()) {
-            $items = $this->getFallbackWheelItems($classLevel);
-        }
+        $items = $query->orderBy('id', 'asc')
+            ->get(['id', 'title', 'subtitle', 'class_level', 'color', 'text_color', 'weight', 'times_won']);
 
         return response()->json([
             'success' => true,
             'category' => [
-                'id' => $category?->id ?? 1,
-                'name' => $category?->name ?? ucwords(str_replace('-', ' ', $slug)),
-                'slug' => $slug,
+                'id' => $category->id,
+                'name' => $category->name,
+                'slug' => $category->slug,
             ],
             'class_level' => $classLevel,
             'items' => $items,
         ]);
-    }
-
-    /**
-     * Hardcoded fallback wheel items guarantee (0% DB failure risk)
-     */
-    private function getFallbackWheelItems(string $classLevel)
-    {
-        $colors = [
-            ['color' => '#8C2D19', 'text' => '#FFFFFF'],
-            ['color' => '#255FA6', 'text' => '#FFFFFF'],
-            ['color' => '#B87314', 'text' => '#FFFFFF'],
-            ['color' => '#6B21A8', 'text' => '#FFFFFF'],
-            ['color' => '#15803D', 'text' => '#FFFFFF'],
-            ['color' => '#C2410C', 'text' => '#FFFFFF'],
-            ['color' => '#0F766E', 'text' => '#FFFFFF'],
-            ['color' => '#A16207', 'text' => '#FFFFFF'],
-        ];
-
-        $majorsX = [
-            'X AKL 1', 'X AKL 2', 'X PM 1', 'X PM 2', 'X KLN 1', 'X KLN 2',
-            'X HTL 1', 'X HTL 2', 'X MPLB 1', 'X MPLB 2', 'X DKV 1', 'X DKV 2',
-            'X PPLG 1', 'X PPLG 2', 'X AKL 3', 'X PM 3', 'X KLN 3', 'X HTL 3',
-        ];
-
-        $majorsXI = [
-            'XI AKL 1', 'XI AKL 2', 'XI PM 1', 'XI PM 2', 'XI KLN 1', 'XI KLN 2',
-            'XI HTL 1', 'XI HTL 2', 'XI MPLB 1', 'XI MPLB 2', 'XI DKV 1', 'XI DKV 2',
-            'XI PPLG 1', 'XI PPLG 2', 'XI AKL 3', 'XI PM 3', 'XI KLN 3', 'XI HTL 3',
-        ];
-
-        $targetList = [];
-        if (str_contains($classLevel, 'XI')) {
-            foreach ($majorsXI as $idx => $name) {
-                $palette = $colors[$idx % count($colors)];
-                $targetList[] = (object) [
-                    'id' => $idx + 100,
-                    'title' => $name,
-                    'subtitle' => 'SMKN 1 Ciamis',
-                    'class_level' => 'Kelas XI',
-                    'color' => $palette['color'],
-                    'text_color' => $palette['text'],
-                    'weight' => 1,
-                    'times_won' => 0,
-                ];
-            }
-        } else {
-            foreach ($majorsX as $idx => $name) {
-                $palette = $colors[$idx % count($colors)];
-                $targetList[] = (object) [
-                    'id' => $idx + 1,
-                    'title' => $name,
-                    'subtitle' => 'SMKN 1 Ciamis',
-                    'class_level' => 'Kelas X',
-                    'color' => $palette['color'],
-                    'text_color' => $palette['text'],
-                    'weight' => 1,
-                    'times_won' => 0,
-                ];
-            }
-        }
-
-        return collect($targetList);
     }
 
     /**

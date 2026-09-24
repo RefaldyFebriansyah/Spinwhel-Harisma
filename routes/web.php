@@ -28,6 +28,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::post('/items', [AdminDashboardController::class, 'storeItem'])->name('items.store');
     Route::put('/items/{item}', [AdminDashboardController::class, 'updateItem'])->name('items.update');
     Route::delete('/items/{item}', [AdminDashboardController::class, 'destroyItem'])->name('items.destroy');
+    Route::post('/items/destroy-all', [AdminDashboardController::class, 'destroyAllItems'])->name('items.destroy-all');
     Route::post('/items/bulk-import', [AdminDashboardController::class, 'bulkImport'])->name('items.bulk-import');
 
     // Engine & Theme Settings
