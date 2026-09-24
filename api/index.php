@@ -32,7 +32,7 @@ if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
     @touch($tmpDbPath);
 }
 
-// 3. Override Environment Variables for Vercel Serverless execution
+// 3. Override Environment Variables & Fix Server Script Variables for Vercel Serverless execution
 putenv('LOG_CHANNEL=stderr');
 putenv('DB_CONNECTION=sqlite');
 putenv('DB_DATABASE='.$tmpDbPath);
@@ -51,6 +51,10 @@ $_ENV['DB_DATABASE'] = $tmpDbPath;
 $_ENV['SESSION_DRIVER'] = 'cookie';
 $_ENV['CACHE_STORE'] = 'file';
 $_ENV['QUEUE_CONNECTION'] = 'sync';
+
+// Fix Vercel's SCRIPT_NAME so Laravel route matching doesn't strip the /api prefix
+$_SERVER['SCRIPT_NAME'] = '/index.php';
+$_SERVER['SCRIPT_FILENAME'] = __DIR__.'/../public/index.php';
 
 // 4. Register Composer Autoloader & Bootstrap Laravel Application
 require_once __DIR__.'/../vendor/autoload.php';
