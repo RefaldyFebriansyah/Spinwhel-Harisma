@@ -1,10 +1,7 @@
 <?php
 
-use App\Models\WheelItem;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Schema;
 
 // 1. Prepare writable /tmp directories for Vercel Serverless environment
 $tmpDirs = [
@@ -32,7 +29,7 @@ if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
     @touch($tmpDbPath);
 }
 
-// 3. Override Environment Variables for Vercel Serverless execution (No route caching traps!)
+// 3. Override Environment Variables for Vercel Serverless execution
 putenv('LOG_CHANNEL=stderr');
 putenv('DB_CONNECTION=sqlite');
 putenv('DB_DATABASE='.$tmpDbPath);
@@ -56,20 +53,7 @@ $_SERVER['SCRIPT_FILENAME'] = __DIR__.'/../public/index.php';
 require_once __DIR__.'/../vendor/autoload.php';
 $app = require_once __DIR__.'/../bootstrap/app.php';
 
-// 5. Automatic Fallback: Auto-migrate & Auto-seed database if WheelItem count is 0
-try {
-    if (! Schema::hasTable('wheel_items') || WheelItem::count() === 0) {
-        Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
-    }
-} catch (Throwable $e) {
-    try {
-        Artisan::call('migrate:fresh', ['--force' => true, '--seed' => true]);
-    } catch (Throwable $ex) {
-        // Ignore fallback errors
-    }
-}
-
-// 6. Handle HTTP Request
+// 5. Handle HTTP Request
 $kernel = $app->make(Kernel::class);
 $response = $kernel->handle(
     $request = Request::capture()
