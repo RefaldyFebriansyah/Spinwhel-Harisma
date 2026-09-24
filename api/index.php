@@ -22,7 +22,7 @@ foreach ($tmpDirs as $dir) {
     }
 }
 
-// 2. Prepare writable SQLite Database in /tmp/database/database.sqlite (Only copy once if missing)
+// 2. Prepare SQLite fallback database path if SQLite is used
 $tmpDbPath = '/tmp/database/database.sqlite';
 $bundledDbPath = __DIR__.'/../database/database.sqlite';
 
@@ -34,10 +34,10 @@ if (! file_exists($tmpDbPath)) {
     }
 }
 
-// 3. Override Environment Variables for Vercel Serverless execution
+// 3. Override Environment Variables for Vercel Serverless execution (Preserves cloud DB settings)
+$dbConn = getenv('DB_CONNECTION') ?: ($_ENV['DB_CONNECTION'] ?? 'sqlite');
+
 putenv('LOG_CHANNEL=stderr');
-putenv('DB_CONNECTION=sqlite');
-putenv('DB_DATABASE='.$tmpDbPath);
 putenv('SESSION_DRIVER=cookie');
 putenv('CACHE_STORE=file');
 putenv('QUEUE_CONNECTION=sync');
@@ -47,9 +47,14 @@ putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
 putenv('APP_CONFIG_CACHE=/tmp/bootstrap/cache/config.php');
 putenv('APP_ROUTES_CACHE=/tmp/bootstrap/cache/routes.php');
 
+if ($dbConn === 'sqlite') {
+    putenv('DB_CONNECTION=sqlite');
+    putenv('DB_DATABASE='.$tmpDbPath);
+    $_ENV['DB_CONNECTION'] = 'sqlite';
+    $_ENV['DB_DATABASE'] = $tmpDbPath;
+}
+
 $_ENV['LOG_CHANNEL'] = 'stderr';
-$_ENV['DB_CONNECTION'] = 'sqlite';
-$_ENV['DB_DATABASE'] = $tmpDbPath;
 $_ENV['SESSION_DRIVER'] = 'cookie';
 $_ENV['CACHE_STORE'] = 'file';
 $_ENV['QUEUE_CONNECTION'] = 'sync';
