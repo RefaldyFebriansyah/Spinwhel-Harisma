@@ -591,28 +591,18 @@
 
                 this.isSpinning = true;
 
+                // Perform full Fisher-Yates shuffle on all active items
+                let shuffled = [...this.items];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+
                 const numSegments = this.items.length;
                 const arcSize = (2 * Math.PI) / numSegments;
-                
-                // Pick a target segment index randomly (0 to numSegments - 1)
-                const targetIdx = Math.floor(Math.random() * numSegments);
-                
-                // Top Pointer is at 1.5 * PI (12 o'clock / -90 deg).
-                // Target slice center angle relative to wheel 0 is `targetIdx * arcSize + arcSize / 2`.
-                // Add a small random offset within slice (70% of slice width) for organic physics feel
-                const randomOffsetInSlice = (Math.random() - 0.5) * (arcSize * 0.7);
-                const targetSliceAngle = (targetIdx * arcSize + arcSize / 2) + randomOffsetInSlice;
-                
-                const extraRotations = this.minRotations * 2 * Math.PI;
-                const currentModuloAngle = this.currentAngle % (2 * Math.PI);
-                
-                let angleToRotate = (1.5 * Math.PI - targetSliceAngle - currentModuloAngle) % (2 * Math.PI);
-                if (angleToRotate < 0) {
-                    angleToRotate += 2 * Math.PI;
-                }
-                
-                const finalAngle = this.currentAngle + extraRotations + angleToRotate;
-                
+                const extraSpins = this.minRotations * 2 * Math.PI + (Math.random() * 2 * Math.PI);
+                const finalAngle = this.currentAngle + extraSpins;
+
                 const startTime = performance.now();
                 const durationMs = this.spinDuration * 1000;
                 const startAngle = this.currentAngle;
@@ -641,40 +631,37 @@
                         if (this.soundEnabled) {
                             this.playChimeSound();
                         }
-                        
-                        const winnerItem = this.items[targetIdx];
-                        this.handleSpinComplete(winnerItem, targetIdx);
+                        this.handleSpinComplete(shuffled);
                     }
                 };
 
                 requestAnimationFrame(animate);
             },
 
-            async handleSpinComplete(winnerItem, targetIdx) {
-                if (!winnerItem) return;
-
-                const drawnEntry = {
-                    id: winnerItem.id,
-                    item_title: winnerItem.title,
-                    subtitle: winnerItem.subtitle || winnerItem.class_level,
-                    class_level: winnerItem.class_level,
+            async handleSpinComplete(shuffledList) {
+                const drawnList = shuffledList.map((item, idx) => ({
+                    id: item.id,
+                    item_title: item.title,
+                    subtitle: item.subtitle || item.class_level,
+                    class_level: item.class_level,
                     category: this.categoryName,
                     drawn_at: new Date().toLocaleTimeString('id-ID')
-                };
+                }));
 
                 if (this.selectedClass === 'Kelas X') {
-                    this.drawnWinnersX.push(drawnEntry);
+                    this.drawnWinnersX = drawnList;
                 } else {
-                    this.drawnWinnersXI.push(drawnEntry);
+                    this.drawnWinnersXI = drawnList;
                 }
 
                 this.spinCount++;
 
-                // If autoRemoveWinner is enabled, remove the drawn item from active wheel items
                 if (this.autoRemoveWinner) {
-                    this.items.splice(targetIdx, 1);
+                    this.items = [];
                     this.drawWheel();
                 }
+
+                const titlesSummary = shuffledList.map((item, idx) => `Urutan ${idx + 1}: ${item.title} (${item.subtitle || item.class_level})`).join(' | ');
 
                 try {
                     await fetch('/api/spin/record', {
@@ -685,10 +672,10 @@
                         },
                         body: JSON.stringify({
                             category_id: this.categoryId,
-                            wheel_item_id: winnerItem.id,
-                            item_title: winnerItem.title,
+                            wheel_item_id: shuffledList[0] ? shuffledList[0].id : null,
+                            item_title: `Pengundian Giliran Pentas ${this.categoryName} (${this.selectedClass})`,
                             class_level: this.selectedClass,
-                            notes: `Urutan ke-${this.currentDrawnList.length}: ${winnerItem.title} (${winnerItem.subtitle || winnerItem.class_level})`,
+                            notes: titlesSummary,
                             auto_remove: this.autoRemoveWinner,
                             executor: 'Panitia Stage'
                         })
