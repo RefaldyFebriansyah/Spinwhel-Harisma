@@ -86,11 +86,12 @@ class AdminDashboardController extends Controller
             'subtitle' => 'nullable|string|max:255',
             'class_level' => 'required|string|in:Kelas X,Kelas XI',
             'color' => 'required|string|max:20',
-            'text_color' => 'required|string|max:20',
+            'text_color' => 'nullable|string|max:20',
             'weight' => 'required|integer|min:1|max:100',
             'is_active' => 'boolean',
         ]);
 
+        $validated['text_color'] = $validated['text_color'] ?? '#FFFFFF';
         $validated['is_active'] = $request->has('is_active');
 
         if ($request->boolean('apply_all_categories')) {
@@ -120,11 +121,12 @@ class AdminDashboardController extends Controller
             'subtitle' => 'nullable|string|max:255',
             'class_level' => 'required|string|in:Kelas X,Kelas XI',
             'color' => 'required|string|max:20',
-            'text_color' => 'required|string|max:20',
+            'text_color' => 'nullable|string|max:20',
             'weight' => 'required|integer|min:1|max:100',
             'is_active' => 'boolean',
         ]);
 
+        $validated['text_color'] = $validated['text_color'] ?? '#FFFFFF';
         $validated['is_active'] = $request->has('is_active');
 
         $item->update($validated);

@@ -151,6 +151,20 @@
                 </div>
             @endif
 
+            @if($errors->any())
+                <div class="p-3.5 rounded-lg bg-rose-950/60 border border-rose-500/40 text-rose-200 space-y-1 shadow-md text-xs">
+                    <div class="flex items-center space-x-2 font-bold text-rose-300">
+                        <i data-lucide="alert-triangle" class="w-4 h-4 text-rose-400 flex-shrink-0"></i>
+                        <span>Terjadi kesalahan pengisian formulir:</span>
+                    </div>
+                    <ul class="list-disc list-inside pl-5 space-y-0.5 text-zinc-300">
+                        @foreach($errors->all() as $err)
+                            <li>{{ $err }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             @yield('content')
         </main>
     </div>
