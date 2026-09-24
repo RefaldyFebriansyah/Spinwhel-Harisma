@@ -81,7 +81,7 @@ class AdminDashboardController extends Controller
     public function storeItem(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => 'required|string',
             'title' => 'required|string|max:255',
             'subtitle' => 'nullable|string|max:255',
             'class_level' => 'required|string|in:Kelas X,Kelas XI',
@@ -94,20 +94,23 @@ class AdminDashboardController extends Controller
         $validated['text_color'] = $validated['text_color'] ?? '#FFFFFF';
         $validated['is_active'] = $request->has('is_active');
 
-        if ($request->boolean('apply_all_categories')) {
-            $categories = Category::all();
-            foreach ($categories as $cat) {
-                $itemData = $validated;
-                $itemData['category_id'] = $cat->id;
-                WheelItem::create($itemData);
-            }
+        // Default to ALL 3 categories unless a specific category_id is chosen and apply_all is not checked
+        $targetCategories = ($request->category_id === 'all' || $request->boolean('apply_all_categories', true))
+            ? Category::all()
+            : Category::where('id', $request->category_id)->get();
 
-            return redirect()->back()->with('success', 'Peserta berhasil ditambahkan ke 3 Mata Lomba sekaligus!');
+        foreach ($targetCategories as $cat) {
+            $itemData = $validated;
+            $itemData['category_id'] = $cat->id;
+            WheelItem::create($itemData);
         }
 
-        WheelItem::create($validated);
+        $countCat = count($targetCategories);
+        $msg = $countCat > 1
+            ? "Peserta '{$validated['title']}' berhasil ditambahkan sekaligus ke {$countCat} Mata Lomba!"
+            : 'Peserta/Item berhasil ditambahkan!';
 
-        return redirect()->back()->with('success', 'Peserta/Item berhasil ditambahkan!');
+        return redirect()->back()->with('success', $msg);
     }
 
     /**
@@ -154,7 +157,7 @@ class AdminDashboardController extends Controller
 
         $query = WheelItem::query();
 
-        if ($categoryId) {
+        if ($categoryId && $categoryId !== 'all') {
             $query->where('category_id', $categoryId);
         }
 
@@ -178,13 +181,14 @@ class AdminDashboardController extends Controller
     public function bulkImport(Request $request): RedirectResponse
     {
         $request->validate([
-            'category_id' => 'required|exists:categories,id',
+            'category_id' => 'required|string',
             'class_level' => 'required|string|in:Kelas X,Kelas XI',
             'bulk_text' => 'required_without:csv_file|nullable|string',
             'csv_file' => 'nullable|file|mimes:csv,txt|max:2048',
         ]);
 
-        $targetCategories = $request->boolean('apply_all_categories')
+        // Default to ALL 3 categories unless a specific category_id is chosen and apply_all is false
+        $targetCategories = ($request->category_id === 'all' || $request->boolean('apply_all_categories', true))
             ? Category::all()
             : Category::where('id', $request->category_id)->get();
 
@@ -262,8 +266,9 @@ class AdminDashboardController extends Controller
         if (count($itemsToCreate) > 0) {
             WheelItem::insert($itemsToCreate);
 
-            $msg = $request->boolean('apply_all_categories')
-                ? count($parsedEntries)." peserta {$classLevel} berhasil di-import sekaligus ke ALL 3 Mata Lomba (Total ".count($itemsToCreate).' item dibuat)!'
+            $countCat = count($targetCategories);
+            $msg = $countCat > 1
+                ? count($parsedEntries)." peserta {$classLevel} berhasil di-import sekaligus ke ALL {$countCat} Mata Lomba (Total ".count($itemsToCreate).' item dibuat)!'
                 : count($itemsToCreate)." peserta/item {$classLevel} berhasil di-import!";
 
             return redirect()->back()->with('success', $msg);

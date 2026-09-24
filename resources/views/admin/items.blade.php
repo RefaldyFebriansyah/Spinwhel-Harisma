@@ -205,10 +205,11 @@
                 @csrf
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs font-semibold text-zinc-300 mb-1">Mata Lomba</label>
-                        <select name="category_id" class="w-full px-3 py-2 rounded bg-[#141622] border border-zinc-800 text-xs text-zinc-100 focus:outline-none focus:border-amber-500">
+                        <label class="block text-xs font-semibold text-zinc-300 mb-1">Target Mata Lomba</label>
+                        <select name="category_id" class="w-full px-3 py-2 rounded bg-[#141622] border border-zinc-800 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-500">
+                            <option value="all" selected>✨ Semua 3 Mata Lomba Sekaligus</option>
                             @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}" {{ $activeCategory?->id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -245,7 +246,7 @@
 
                 <div class="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-1">
                     <div class="flex items-center space-x-2">
-                        <input type="checkbox" name="apply_all_categories" id="apply_all_add" value="1" class="w-4 h-4 accent-amber-500 cursor-pointer">
+                        <input type="checkbox" name="apply_all_categories" id="apply_all_add" value="1" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
                         <label for="apply_all_add" class="text-xs font-bold text-amber-200 cursor-pointer">Tambahkan ke 3 Mata Lomba Sekaligus</label>
                     </div>
                     <p class="text-[10px] text-zinc-400 pl-6">Peserta ini akan otomatis didaftarkan ke Solo Vocal, Tari Tradisional, dan Baca Puisi.</p>
@@ -342,9 +343,10 @@
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-zinc-300 mb-1">Target Mata Lomba</label>
-                        <select name="category_id" class="w-full px-3 py-2 rounded bg-[#141622] border border-zinc-800 text-xs text-zinc-100 focus:outline-none focus:border-amber-500">
+                        <select name="category_id" class="w-full px-3 py-2 rounded bg-[#141622] border border-zinc-800 text-xs text-amber-300 font-bold focus:outline-none focus:border-amber-500">
+                            <option value="all" selected>✨ Semua 3 Mata Lomba Sekaligus</option>
                             @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}" {{ $activeCategory?->id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
+                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                             @endforeach
                         </select>
                     </div>
@@ -374,7 +376,7 @@ Denny Firmansyah (04)
 
                 <div class="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/30 space-y-1">
                     <div class="flex items-center space-x-2">
-                        <input type="checkbox" name="apply_all_categories" id="apply_all_bulk" value="1" class="w-4 h-4 accent-amber-500 cursor-pointer">
+                        <input type="checkbox" name="apply_all_categories" id="apply_all_bulk" value="1" checked class="w-4 h-4 accent-amber-500 cursor-pointer">
                         <label for="apply_all_bulk" class="text-xs font-bold text-amber-200 cursor-pointer">Import sekaligus ke 3 Mata Lomba</label>
                     </div>
                     <p class="text-[10px] text-zinc-400 pl-6">Semua peserta di atas akan di-import langsung ke Solo Vocal, Tari Tradisional, dan Baca Puisi.</p>

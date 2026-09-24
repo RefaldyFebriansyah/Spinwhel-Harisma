@@ -591,33 +591,42 @@
 
                 this.isSpinning = true;
 
-                // Shuffle active items for selected class
-                let shuffled = [...this.items];
-                for (let i = shuffled.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-                }
-
                 const numSegments = this.items.length;
                 const arcSize = (2 * Math.PI) / numSegments;
-                const extraSpins = this.minRotations * 2 * Math.PI + (Math.random() * 2 * Math.PI);
-                const finalAngle = this.currentAngle + extraSpins;
-
+                
+                // Pick a target segment index randomly (0 to numSegments - 1)
+                const targetIdx = Math.floor(Math.random() * numSegments);
+                
+                // Top Pointer is at 1.5 * PI (12 o'clock / -90 deg).
+                // Target slice center angle relative to wheel 0 is `targetIdx * arcSize + arcSize / 2`.
+                // Add a small random offset within slice (70% of slice width) for organic physics feel
+                const randomOffsetInSlice = (Math.random() - 0.5) * (arcSize * 0.7);
+                const targetSliceAngle = (targetIdx * arcSize + arcSize / 2) + randomOffsetInSlice;
+                
+                const extraRotations = this.minRotations * 2 * Math.PI;
+                const currentModuloAngle = this.currentAngle % (2 * Math.PI);
+                
+                let angleToRotate = (1.5 * Math.PI - targetSliceAngle - currentModuloAngle) % (2 * Math.PI);
+                if (angleToRotate < 0) {
+                    angleToRotate += 2 * Math.PI;
+                }
+                
+                const finalAngle = this.currentAngle + extraRotations + angleToRotate;
+                
                 const startTime = performance.now();
                 const durationMs = this.spinDuration * 1000;
                 const startAngle = this.currentAngle;
-
                 let lastAudioTickAngle = startAngle;
 
                 const animate = (now) => {
                     const elapsed = now - startTime;
                     const progress = Math.min(elapsed / durationMs, 1);
                     
-                    // Smooth Cubic Ease Out
+                    // Smooth Cubic Ease Out for realistic wheel deceleration
                     const easeOut = 1 - Math.pow(1 - progress, 3);
                     this.currentAngle = startAngle + (finalAngle - startAngle) * easeOut;
 
-                    // Audio Tick Sound
+                    // Audio Tick Sound when pointer passes slice border
                     if (this.soundEnabled && Math.abs(this.currentAngle - lastAudioTickAngle) >= arcSize) {
                         this.playTickSound();
                         lastAudioTickAngle = this.currentAngle;
@@ -632,15 +641,81 @@
                         if (this.soundEnabled) {
                             this.playChimeSound();
                         }
-                        this.handleSpinComplete(shuffled);
+                        
+                        const winnerItem = this.items[targetIdx];
+                        this.handleSpinComplete(winnerItem, targetIdx);
                     }
                 };
 
                 requestAnimationFrame(animate);
             },
 
-            async handleSpinComplete(shuffledList) {
-                const drawnList = shuffledList.map((item, idx) => ({
+            async handleSpinComplete(winnerItem, targetIdx) {
+                if (!winnerItem) return;
+
+                const drawnEntry = {
+                    id: winnerItem.id,
+                    item_title: winnerItem.title,
+                    subtitle: winnerItem.subtitle || winnerItem.class_level,
+                    class_level: winnerItem.class_level,
+                    category: this.categoryName,
+                    drawn_at: new Date().toLocaleTimeString('id-ID')
+                };
+
+                if (this.selectedClass === 'Kelas X') {
+                    this.drawnWinnersX.push(drawnEntry);
+                } else {
+                    this.drawnWinnersXI.push(drawnEntry);
+                }
+
+                this.spinCount++;
+
+                // If autoRemoveWinner is enabled, remove the drawn item from active wheel items
+                if (this.autoRemoveWinner) {
+                    this.items.splice(targetIdx, 1);
+                    this.drawWheel();
+                }
+
+                try {
+                    await fetch('/api/spin/record', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            category_id: this.categoryId,
+                            wheel_item_id: winnerItem.id,
+                            item_title: winnerItem.title,
+                            class_level: this.selectedClass,
+                            notes: `Urutan ke-${this.currentDrawnList.length}: ${winnerItem.title} (${winnerItem.subtitle || winnerItem.class_level})`,
+                            auto_remove: this.autoRemoveWinner,
+                            executor: 'Panitia Stage'
+                        })
+                    });
+                } catch (e) {
+                    console.error('Error saving spin result:', e);
+                }
+
+                // Show Celebration Modal Overlay
+                this.showCelebrationModal = true;
+            },
+
+            // 1-Click Shuffle All Participants for current class
+            shuffleAllAtOnce() {
+                if (this.isSpinning || this.items.length === 0) return;
+
+                if (!confirm(`Acak seluruh (${this.items.length}) peserta ${this.selectedClass} secara instan?`)) {
+                    return;
+                }
+
+                let shuffled = [...this.items];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+
+                const drawnList = shuffled.map((item) => ({
                     id: item.id,
                     item_title: item.title,
                     subtitle: item.subtitle || item.class_level,
@@ -655,31 +730,12 @@
                     this.drawnWinnersXI = drawnList;
                 }
 
-                this.spinCount++;
-
-                const titlesSummary = shuffledList.map((item, idx) => `Urutan ${idx + 1}: ${item.title} (${item.subtitle || item.class_level})`).join(' | ');
-
-                try {
-                    await fetch('/api/spin/record', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify({
-                            category_id: this.categoryId,
-                            wheel_item_id: shuffledList[0] ? shuffledList[0].id : null,
-                            item_title: `Acak Undian ${this.categoryName} (${this.selectedClass})`,
-                            class_level: this.selectedClass,
-                            notes: titlesSummary,
-                            executor: 'Panitia Stage'
-                        })
-                    });
-                } catch (e) {
-                    console.error('Error saving randomized sequence:', e);
+                this.spinCount += shuffled.length;
+                if (this.autoRemoveWinner) {
+                    this.items = [];
+                    this.drawWheel();
                 }
 
-                // Show Celebration Modal Overlay
                 this.showCelebrationModal = true;
             },
 
