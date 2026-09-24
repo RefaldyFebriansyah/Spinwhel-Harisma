@@ -20,12 +20,13 @@ foreach ($tmpDirs as $dir) {
 $tmpDbPath = '/tmp/database/database.sqlite';
 $bundledDbPath = __DIR__.'/../database/database.sqlite';
 
-if (! file_exists($tmpDbPath) || filesize($tmpDbPath) === 0) {
-    if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
+// Always overwrite /tmp DB if bundled DB exists and is larger/newer
+if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
+    if (! file_exists($tmpDbPath) || filesize($tmpDbPath) < filesize($bundledDbPath)) {
         @copy($bundledDbPath, $tmpDbPath);
-    } else {
-        @touch($tmpDbPath);
     }
+} elseif (! file_exists($tmpDbPath)) {
+    @touch($tmpDbPath);
 }
 
 // 3. Override Environment Variables for Vercel Serverless execution
