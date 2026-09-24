@@ -52,8 +52,9 @@ $_ENV['SESSION_DRIVER'] = 'cookie';
 $_ENV['CACHE_STORE'] = 'file';
 $_ENV['QUEUE_CONNECTION'] = 'sync';
 
-// 4. Bootstrap Laravel Application
-$app = require __DIR__.'/../bootstrap/app.php';
+// 4. Register Composer Autoloader & Bootstrap Laravel Application
+require_once __DIR__.'/../vendor/autoload.php';
+$app = require_once __DIR__.'/../bootstrap/app.php';
 
 // 5. Automatic Fallback: Auto-migrate & Auto-seed database if WheelItem count is 0
 try {
