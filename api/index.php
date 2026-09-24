@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 // 1. Prepare writable /tmp directories for Vercel Serverless environment
 $tmpDirs = [
     '/tmp/storage/framework/views',
-    '/tmp/storage/framework/cache',
+    '/tmp/storage/framework/cache/data',
     '/tmp/storage/framework/sessions',
     '/tmp/storage/logs',
     '/tmp/bootstrap/cache',
@@ -52,6 +52,12 @@ $_SERVER['SCRIPT_FILENAME'] = __DIR__.'/../public/index.php';
 // 4. Register Composer Autoloader & Bootstrap Laravel Application
 require_once __DIR__.'/../vendor/autoload.php';
 $app = require_once __DIR__.'/../bootstrap/app.php';
+
+// Dynamically force Blade Compiled View Path & Session Config for Serverless
+$app->make('config')->set('view.compiled', '/tmp/storage/framework/views');
+$app->make('config')->set('session.driver', 'cookie');
+$app->make('config')->set('cache.default', 'file');
+$app->make('config')->set('cache.stores.file.path', '/tmp/storage/framework/cache/data');
 
 // 5. Handle HTTP Request
 $kernel = $app->make(Kernel::class);
