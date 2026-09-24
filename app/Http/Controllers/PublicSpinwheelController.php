@@ -36,6 +36,9 @@ class PublicSpinwheelController extends Controller
     /**
      * Fetch items for a category formatted for Canvas rendering, with optional class level filter.
      */
+    /**
+     * Fetch items for a category formatted for Canvas rendering, with optional class level filter.
+     */
     public function getItems(Request $request, string $slug): JsonResponse
     {
         $category = Category::where('slug', $slug)->firstOrFail();
@@ -50,6 +53,12 @@ class PublicSpinwheelController extends Controller
         $items = $query->orderBy('id', 'asc')
             ->get(['id', 'title', 'subtitle', 'class_level', 'color', 'text_color', 'weight', 'times_won']);
 
+        $hasHistory = SpinHistory::where('category_id', $category->id)
+            ->when($classLevel !== 'Semua Kelas' && ! empty($classLevel), fn ($q) => $q->where('class_level', $classLevel))
+            ->exists();
+
+        $drawnSequence = $hasHistory ? $this->getParsedSpinSequence($category->id, $classLevel) : [];
+
         return response()->json([
             'success' => true,
             'category' => [
@@ -59,6 +68,8 @@ class PublicSpinwheelController extends Controller
             ],
             'class_level' => $classLevel,
             'items' => $items,
+            'has_history' => $hasHistory,
+            'drawn_sequence' => $drawnSequence,
         ]);
     }
 
@@ -139,6 +150,87 @@ class PublicSpinwheelController extends Controller
     }
 
     /**
+     * Helper to parse history items for a category and class level.
+     */
+    private function getParsedSpinSequence(int $categoryId, string $classLevel): array
+    {
+        $history = SpinHistory::where('category_id', $categoryId)
+            ->where('class_level', $classLevel)
+            ->latest('spun_at')
+            ->first();
+
+        $items = [];
+        if ($history && ! empty($history->notes)) {
+            $parts = explode(' | ', $history->notes);
+            foreach ($parts as $p) {
+                $clean = trim(preg_replace('/^Urutan( ke-)? \d+: /i', '', $p));
+                if (empty($clean)) {
+                    continue;
+                }
+
+                $lastParen = strrpos($clean, '(');
+                if ($lastParen !== false) {
+                    $title = trim(substr($clean, 0, $lastParen));
+                    $subtitle = trim(substr($clean, $lastParen + 1), '() ');
+                } else {
+                    $title = $clean;
+                    $subtitle = $classLevel;
+                }
+
+                $items[] = (object) [
+                    'title' => $title,
+                    'subtitle' => $subtitle,
+                    'class_level' => $classLevel,
+                ];
+            }
+        }
+
+        // If no notes-based history, try individual single spins
+        if (empty($items)) {
+            $individualHistories = SpinHistory::where('category_id', $categoryId)
+                ->where('class_level', $classLevel)
+                ->whereNotNull('wheel_item_id')
+                ->orderBy('spun_at', 'asc')
+                ->get();
+
+            foreach ($individualHistories as $h) {
+                $items[] = (object) [
+                    'title' => $h->item_title,
+                    'subtitle' => $h->class_level,
+                    'class_level' => $h->class_level,
+                ];
+            }
+        }
+
+        $dbItems = WheelItem::where('category_id', $categoryId)
+            ->where('class_level', $classLevel)
+            ->where('is_active', true)
+            ->orderBy('id', 'asc')
+            ->get();
+
+        if (empty($items)) {
+            // Deterministic order by ID if never spun on stage yet
+            $items = $dbItems->map(fn ($r) => (object) [
+                'title' => $r->title,
+                'subtitle' => $r->subtitle ?: $classLevel,
+                'class_level' => $classLevel,
+            ])->all();
+        } elseif (count($items) < count($dbItems)) {
+            $existingTitles = array_map(fn ($i) => $i->title, $items);
+            $remaining = $dbItems->reject(fn ($i) => in_array($i->title, $existingTitles));
+            foreach ($remaining as $r) {
+                $items[] = (object) [
+                    'title' => $r->title,
+                    'subtitle' => $r->subtitle ?: $classLevel,
+                    'class_level' => $classLevel,
+                ];
+            }
+        }
+
+        return $items;
+    }
+
+    /**
      * Render Printable Master PDF View for ALL Categories in one official document.
      */
     public function printMasterPdf(Request $request): View
@@ -147,85 +239,10 @@ class PublicSpinwheelController extends Controller
         $masterCategoriesData = [];
 
         foreach ($categories as $category) {
-            // Get latest spin history for Kelas X
-            $historyX = SpinHistory::where('category_id', $category->id)
-                ->where('class_level', 'Kelas X')
-                ->latest('spun_at')
-                ->first();
+            $itemsX = $this->getParsedSpinSequence($category->id, 'Kelas X');
+            $itemsXI = $this->getParsedSpinSequence($category->id, 'Kelas XI');
 
-            // Get latest spin history for Kelas XI
-            $historyXI = SpinHistory::where('category_id', $category->id)
-                ->where('class_level', 'Kelas XI')
-                ->latest('spun_at')
-                ->first();
-
-            $itemsX = [];
-            if ($historyX && ! empty($historyX->notes)) {
-                $parts = explode(' | ', $historyX->notes);
-                foreach ($parts as $p) {
-                    $clean = trim(preg_replace('/^Urutan \d+: /', '', $p));
-                    if (empty($clean)) {
-                        continue;
-                    }
-
-                    $lastParen = strrpos($clean, '(');
-                    if ($lastParen !== false) {
-                        $title = trim(substr($clean, 0, $lastParen));
-                        $subtitle = trim(substr($clean, $lastParen + 1), '() ');
-                    } else {
-                        $title = $clean;
-                        $subtitle = 'Kelas X';
-                    }
-
-                    $itemsX[] = (object) [
-                        'title' => $title,
-                        'subtitle' => $subtitle,
-                        'class_level' => 'Kelas X',
-                    ];
-                }
-            }
-
-            if (empty($itemsX)) {
-                $itemsX = WheelItem::where('category_id', $category->id)
-                    ->where('class_level', 'Kelas X')
-                    ->where('is_active', true)
-                    ->get();
-            }
-
-            $itemsXI = [];
-            if ($historyXI && ! empty($historyXI->notes)) {
-                $parts = explode(' | ', $historyXI->notes);
-                foreach ($parts as $p) {
-                    $clean = trim(preg_replace('/^Urutan \d+: /', '', $p));
-                    if (empty($clean)) {
-                        continue;
-                    }
-
-                    $lastParen = strrpos($clean, '(');
-                    if ($lastParen !== false) {
-                        $title = trim(substr($clean, 0, $lastParen));
-                        $subtitle = trim(substr($clean, $lastParen + 1), '() ');
-                    } else {
-                        $title = $clean;
-                        $subtitle = 'Kelas XI';
-                    }
-
-                    $itemsXI[] = (object) [
-                        'title' => $title,
-                        'subtitle' => $subtitle,
-                        'class_level' => 'Kelas XI',
-                    ];
-                }
-            }
-
-            if (empty($itemsXI)) {
-                $itemsXI = WheelItem::where('category_id', $category->id)
-                    ->where('class_level', 'Kelas XI')
-                    ->where('is_active', true)
-                    ->get();
-            }
-
-            // Interleave strictly: Kelas X first (#1), Kelas XI second (#1), Kelas X third (#2), Kelas XI fourth (#2)...
+            // Interleave strictly: Kelas X (#1), Kelas XI (#1), Kelas X (#2), Kelas XI (#2)...
             $interleaved = [];
             $maxCount = max(count($itemsX), count($itemsXI));
             for ($i = 0; $i < $maxCount; $i++) {

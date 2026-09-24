@@ -475,6 +475,23 @@
                         this.categoryId = data.category.id;
                         this.categoryName = data.category.name;
                         this.items = data.items;
+
+                        if (data.has_history && data.drawn_sequence && data.drawn_sequence.length > 0) {
+                            const formatted = data.drawn_sequence.map(i => ({
+                                id: i.id || null,
+                                item_title: i.title,
+                                subtitle: i.subtitle || i.class_level,
+                                class_level: i.class_level,
+                                category: data.category.name,
+                                drawn_at: ''
+                            }));
+                            if (classLevel === 'Kelas X') {
+                                this.drawnWinnersX = formatted;
+                            } else {
+                                this.drawnWinnersXI = formatted;
+                            }
+                        }
+
                         this.drawWheel();
                     }
                 } catch (e) {
@@ -689,7 +706,7 @@
             },
 
             // 1-Click Shuffle All Participants for current class
-            shuffleAllAtOnce() {
+            async shuffleAllAtOnce() {
                 if (this.isSpinning || this.items.length === 0) return;
 
                 if (!confirm(`Acak seluruh (${this.items.length}) peserta ${this.selectedClass} secara instan?`)) {
@@ -718,6 +735,30 @@
                 }
 
                 this.spinCount += shuffled.length;
+
+                const titlesSummary = shuffled.map((item, idx) => `Urutan ${idx + 1}: ${item.title} (${item.subtitle || item.class_level})`).join(' | ');
+
+                try {
+                    await fetch('/api/spin/record', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            category_id: this.categoryId,
+                            wheel_item_id: shuffled[0] ? shuffled[0].id : null,
+                            item_title: `Pengundian Giliran Pentas ${this.categoryName} (${this.selectedClass})`,
+                            class_level: this.selectedClass,
+                            notes: titlesSummary,
+                            auto_remove: this.autoRemoveWinner,
+                            executor: 'Panitia Stage'
+                        })
+                    });
+                } catch (e) {
+                    console.error('Error saving spin result:', e);
+                }
+
                 if (this.autoRemoveWinner) {
                     this.items = [];
                     this.drawWheel();
