@@ -29,19 +29,23 @@ if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
 }
 
 // 3. Override Environment Variables for Vercel Serverless execution
+putenv('APP_KEY=base64:pj8GOVGfD4zbNzq5aYv3VeDSMyhJpvG86hR1q5kit/g=');
+putenv('APP_DEBUG=true');
 putenv('LOG_CHANNEL=stderr');
 putenv('DB_CONNECTION=sqlite');
 putenv('DB_DATABASE='.$tmpDbPath);
 putenv('SESSION_DRIVER=cookie');
-putenv('CACHE_STORE=file');
+putenv('CACHE_STORE=array');
 putenv('QUEUE_CONNECTION=sync');
 putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
 
+$_ENV['APP_KEY'] = 'base64:pj8GOVGfD4zbNzq5aYv3VeDSMyhJpvG86hR1q5kit/g=';
+$_ENV['APP_DEBUG'] = 'true';
 $_ENV['LOG_CHANNEL'] = 'stderr';
 $_ENV['DB_CONNECTION'] = 'sqlite';
 $_ENV['DB_DATABASE'] = $tmpDbPath;
 $_ENV['SESSION_DRIVER'] = 'cookie';
-$_ENV['CACHE_STORE'] = 'file';
+$_ENV['CACHE_STORE'] = 'array';
 $_ENV['QUEUE_CONNECTION'] = 'sync';
 $_ENV['VIEW_COMPILED_PATH'] = '/tmp/storage/framework/views';
 
