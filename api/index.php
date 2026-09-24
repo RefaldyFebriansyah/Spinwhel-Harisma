@@ -16,15 +16,12 @@ foreach ($tmpDirs as $dir) {
     }
 }
 
-// 2. Prepare writable SQLite Database in /tmp/database/database.sqlite
+// 2. Always sync bundled SQLite database (155 KB) to /tmp/database/database.sqlite
 $tmpDbPath = '/tmp/database/database.sqlite';
 $bundledDbPath = __DIR__.'/../database/database.sqlite';
 
-// Always overwrite /tmp DB if bundled DB exists and is larger/newer
 if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
-    if (! file_exists($tmpDbPath) || filesize($tmpDbPath) < filesize($bundledDbPath)) {
-        @copy($bundledDbPath, $tmpDbPath);
-    }
+    @copy($bundledDbPath, $tmpDbPath);
 } elseif (! file_exists($tmpDbPath)) {
     @touch($tmpDbPath);
 }

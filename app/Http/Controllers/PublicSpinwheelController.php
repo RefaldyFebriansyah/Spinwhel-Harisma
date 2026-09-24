@@ -44,7 +44,11 @@ class PublicSpinwheelController extends Controller
         $query = WheelItem::where('category_id', $category->id)->where('is_active', true);
 
         if ($classLevel !== 'Semua Kelas' && ! empty($classLevel)) {
-            $query->where('class_level', $classLevel);
+            $cleanClass = trim($classLevel);
+            $query->where(function ($q) use ($cleanClass) {
+                $q->where('class_level', $cleanClass)
+                    ->orWhere('class_level', 'LIKE', '%'.$cleanClass.'%');
+            });
         }
 
         $items = $query->orderBy('id', 'asc')
