@@ -53,9 +53,18 @@ $_ENV['VIEW_COMPILED_PATH'] = '/tmp/storage/framework/views';
 $_SERVER['SCRIPT_NAME'] = '/index.php';
 $_SERVER['SCRIPT_FILENAME'] = __DIR__.'/../public/index.php';
 
-// 4. Register Composer Autoloader & Bootstrap Laravel Application
-require_once __DIR__.'/../vendor/autoload.php';
-$app = require_once __DIR__.'/../bootstrap/app.php';
+try {
+    // 4. Register Composer Autoloader & Bootstrap Laravel Application
+    require_once __DIR__.'/../vendor/autoload.php';
+    $app = require_once __DIR__.'/../bootstrap/app.php';
 
-// 5. Handle HTTP Request
-$app->handleRequest(Request::capture());
+    // 5. Handle HTTP Request
+    $app->handleRequest(Request::capture());
+} catch (Throwable $e) {
+    http_response_code(500);
+    header('Content-Type: text/plain');
+    echo "VERCEL ERROR DIAGNOSTIC:\n";
+    echo $e->getMessage()."\n\n";
+    echo $e->getFile().':'.$e->getLine()."\n\n";
+    echo $e->getTraceAsString();
+}
