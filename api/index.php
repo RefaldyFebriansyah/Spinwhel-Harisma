@@ -20,8 +20,8 @@ foreach ($tmpDirs as $dir) {
 $tmpDbPath = '/tmp/database/database.sqlite';
 $bundledDbPath = __DIR__.'/../database/database.sqlite';
 
-if (! file_exists($tmpDbPath)) {
-    if (file_exists($bundledDbPath)) {
+if (! file_exists($tmpDbPath) || filesize($tmpDbPath) === 0) {
+    if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
         @copy($bundledDbPath, $tmpDbPath);
     } else {
         @touch($tmpDbPath);
@@ -32,6 +32,9 @@ if (! file_exists($tmpDbPath)) {
 putenv('LOG_CHANNEL=stderr');
 putenv('DB_CONNECTION=sqlite');
 putenv('DB_DATABASE='.$tmpDbPath);
+putenv('SESSION_DRIVER=cookie');
+putenv('CACHE_STORE=file');
+putenv('QUEUE_CONNECTION=sync');
 putenv('VIEW_COMPILED_PATH=/tmp/storage/framework/views');
 putenv('APP_SERVICES_CACHE=/tmp/bootstrap/cache/services.php');
 putenv('APP_PACKAGES_CACHE=/tmp/bootstrap/cache/packages.php');
@@ -41,6 +44,9 @@ putenv('APP_ROUTES_CACHE=/tmp/bootstrap/cache/routes.php');
 $_ENV['LOG_CHANNEL'] = 'stderr';
 $_ENV['DB_CONNECTION'] = 'sqlite';
 $_ENV['DB_DATABASE'] = $tmpDbPath;
+$_ENV['SESSION_DRIVER'] = 'cookie';
+$_ENV['CACHE_STORE'] = 'file';
+$_ENV['QUEUE_CONNECTION'] = 'sync';
 
 // 4. Forward request to Laravel public/index.php
 require __DIR__.'/../public/index.php';
