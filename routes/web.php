@@ -27,7 +27,6 @@ Route::prefix('admin')->name('admin.')->group(function () {
     Route::get('/items', [AdminDashboardController::class, 'items'])->name('items.index');
     Route::post('/items', [AdminDashboardController::class, 'storeItem'])->name('items.store');
     Route::put('/items/{item}', [AdminDashboardController::class, 'updateItem'])->name('items.update');
-    Route::delete('/items/clear-all', [AdminDashboardController::class, 'clearAllItems'])->name('items.clear-all');
     Route::delete('/items/{item}', [AdminDashboardController::class, 'destroyItem'])->name('items.destroy');
     Route::post('/items/bulk-import', [AdminDashboardController::class, 'bulkImport'])->name('items.bulk-import');
 

@@ -47,16 +47,7 @@
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex flex-wrap items-center gap-2.5">
-            <form action="{{ route('admin.items.clear-all') }}" method="POST" onsubmit="return confirm('APAKAH ANDA YAKIN INGIN MENGHAPUS SELURUH DATA PESERTA DARI SEMUA MATA LOMBA?\n\nTindakan ini tidak dapat dibatalkan.')">
-                @csrf
-                @method('DELETE')
-                <button type="submit" class="px-3.5 py-2 rounded-lg bg-rose-950/80 hover:bg-rose-900 border border-rose-500/40 text-rose-300 hover:text-rose-200 font-bold text-xs transition-all shadow-md flex items-center space-x-1.5 transform hover:-translate-y-0.5 active:translate-y-0">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                    <span>Hapus Semua Peserta</span>
-                </button>
-            </form>
-
+        <div class="flex items-center space-x-2.5">
             <button @click="bulkModalOpen = true" class="px-4 py-2 rounded-lg bg-[#161826] hover:bg-[#1D2033] text-amber-300 hover:text-amber-200 font-bold text-xs transition-all shadow-md border border-amber-500/30 flex items-center space-x-2 transform hover:-translate-y-0.5 active:translate-y-0">
                 <i data-lucide="file-up" class="w-4 h-4"></i>
                 <span>Bulk Import 18+ Nama</span>
@@ -221,7 +212,6 @@
                     <div>
                         <label class="block text-xs font-semibold text-zinc-300 mb-1">Mata Lomba</label>
                         <select name="category_id" class="w-full px-3 py-2 rounded bg-[#141622] border border-zinc-800 text-xs text-zinc-100 focus:outline-none focus:border-amber-500">
-                            <option value="all" class="font-bold text-amber-300 bg-amber-950">★ SEMUA MATA LOMBA (Sekaligus)</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}" {{ $activeCategory?->id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                             @endforeach
@@ -235,11 +225,6 @@
                             <option value="Kelas XI">Kelas XI</option>
                         </select>
                     </div>
-                </div>
-
-                <div class="flex items-center space-x-2 p-2 rounded bg-amber-500/10 border border-amber-500/20">
-                    <input type="checkbox" name="apply_all_categories" id="apply_all_add" value="1" class="w-4 h-4 accent-amber-500">
-                    <label for="apply_all_add" class="text-xs text-amber-300 font-bold">Otomatis tambahkan peserta ini ke SEMUA Mata Lomba</label>
                 </div>
 
                 <div>
@@ -355,7 +340,6 @@
                     <div>
                         <label class="block text-xs font-semibold text-zinc-300 mb-1">Target Mata Lomba</label>
                         <select name="category_id" class="w-full px-3 py-2 rounded bg-[#141622] border border-zinc-800 text-xs text-zinc-100 focus:outline-none focus:border-amber-500">
-                            <option value="all" class="font-bold text-amber-300 bg-amber-950">★ SEMUA MATA LOMBA (Sekaligus)</option>
                             @foreach($categories as $cat)
                                 <option value="{{ $cat->id }}" {{ $activeCategory?->id == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
                             @endforeach
@@ -369,11 +353,6 @@
                             <option value="Kelas XI">Kelas XI</option>
                         </select>
                     </div>
-                </div>
-
-                <div class="flex items-center space-x-2 p-2 rounded bg-amber-500/10 border border-amber-500/20">
-                    <input type="checkbox" name="apply_all_categories" id="apply_all_bulk" value="1" checked class="w-4 h-4 accent-amber-500">
-                    <label for="apply_all_bulk" class="text-xs text-amber-300 font-bold">Otomatis import ke SEMUA Mata Lomba (Solo Vocal, Tari Modern, Sketching, dll)</label>
                 </div>
 
                 <div>

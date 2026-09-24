@@ -22,14 +22,16 @@ foreach ($tmpDirs as $dir) {
     }
 }
 
-// 2. Prepare writable SQLite Database in /tmp/database/database.sqlite
+// 2. Prepare writable SQLite Database in /tmp/database/database.sqlite (Only copy once if missing)
 $tmpDbPath = '/tmp/database/database.sqlite';
 $bundledDbPath = __DIR__.'/../database/database.sqlite';
 
-if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
-    @copy($bundledDbPath, $tmpDbPath);
-} elseif (! file_exists($tmpDbPath)) {
-    @touch($tmpDbPath);
+if (! file_exists($tmpDbPath)) {
+    if (file_exists($bundledDbPath) && filesize($bundledDbPath) > 0) {
+        @copy($bundledDbPath, $tmpDbPath);
+    } else {
+        @touch($tmpDbPath);
+    }
 }
 
 // 3. Override Environment Variables for Vercel Serverless execution
