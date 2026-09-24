@@ -2,64 +2,85 @@
 
 @section('title', $engineConfig['event_title'] . ' - Stage Spinwheel Harisma')
 
+@push('styles')
+<style>
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
+@endpush
+
 @section('content')
-<!-- Locked 100vh container: Absolutely NO vertical page scrolling! -->
-<div x-data="spinwheelApp()" x-init="init()" class="h-screen w-screen overflow-hidden flex flex-col justify-between relative bg-[#08090D] text-zinc-100 font-sans select-none">
+<!-- Flexible container: Responsive height on mobile, locked 100vh on desktop/projector -->
+<div x-data="spinwheelApp()" x-init="init()" class="min-h-screen lg:h-screen w-full overflow-y-auto lg:overflow-hidden flex flex-col justify-between relative bg-[#08090D] text-zinc-100 font-sans select-none pb-6 lg:pb-0">
 
     <!-- Subtle Batik Overlay Texture Background -->
     <div class="fixed inset-0 pointer-events-none z-0 opacity-10 bg-batik-pattern bg-repeat"></div>
 
     <!-- Decorative Top Corner Ornaments -->
-    <div class="absolute top-0 left-0 w-32 h-32 opacity-20 pointer-events-none z-10">
+    <div class="absolute top-0 left-0 w-24 h-24 sm:w-32 sm:h-32 opacity-20 pointer-events-none z-10">
         <svg viewBox="0 0 100 100" fill="none" stroke="#D4AF37" stroke-width="1.2">
             <path d="M0 0 C40 0 60 20 60 60 C20 60 0 40 0 0 Z M15 15 C35 15 45 25 45 45 M0 0 L70 70" />
             <circle cx="25" cy="25" r="3.5" fill="#D4AF37"/>
         </svg>
     </div>
-    <div class="absolute top-0 right-0 w-32 h-32 opacity-20 pointer-events-none z-10 transform scale-x-[-1]">
+    <div class="absolute top-0 right-0 w-24 h-24 sm:w-32 sm:h-32 opacity-20 pointer-events-none z-10 transform scale-x-[-1]">
         <svg viewBox="0 0 100 100" fill="none" stroke="#D4AF37" stroke-width="1.2">
             <path d="M0 0 C40 0 60 20 60 60 C20 60 0 40 0 0 Z M15 15 C35 15 45 25 45 45 M0 0 L70 70" />
             <circle cx="25" cy="25" r="3.5" fill="#D4AF37"/>
         </svg>
     </div>
 
-    <!-- 1. Top Header Bar (Prominent & High-Contrast for Projector/Stage Display) -->
-    <header class="relative z-20 w-full bg-[#0B0C12]/95 backdrop-blur-md border-b border-amber-500/20 px-6 py-3 md:py-3.5 flex items-center justify-between flex-shrink-0 shadow-2xl">
+    <!-- 1. Top Header Bar (Responsive & High-Contrast) -->
+    <header class="relative z-20 w-full bg-[#0B0C12]/95 backdrop-blur-md border-b border-amber-500/20 px-3 sm:px-6 py-2.5 lg:py-3 flex flex-col lg:flex-row items-center justify-between gap-2.5 lg:gap-4 flex-shrink-0 shadow-2xl">
         
-        <!-- Brand & School Info -->
-        <div class="flex items-center space-x-3.5">
-            <img src="{{ asset('images/logo-harisma.png') }}" alt="Logo Sanggar Seni Harisma" class="w-11 h-11 md:w-12 md:h-12 object-contain drop-shadow-[0_0_12px_rgba(212,175,55,0.7)]">
-            <div>
-                <div class="flex items-center space-x-2.5">
-                    <h1 class="text-sm md:text-base font-black tracking-wider uppercase font-serif-ethnic text-amber-200">
-                        SANGGAR SENI HARISMA
-                    </h1>
-                    <span class="text-[10px] md:text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/50 text-amber-300">
-                        SMKN 1 CIAMIS
-                    </span>
+        <!-- Top Row on Mobile: Brand & Actions -->
+        <div class="w-full lg:w-auto flex items-center justify-between">
+            <!-- Brand & School Info -->
+            <div class="flex items-center space-x-3">
+                <img src="{{ asset('images/logo-harisma.png') }}" alt="Logo Sanggar Seni Harisma" class="w-9 h-9 sm:w-11 sm:h-11 lg:w-12 lg:h-12 object-contain drop-shadow-[0_0_12px_rgba(212,175,55,0.7)] flex-shrink-0">
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <h1 class="text-xs sm:text-sm lg:text-base font-black tracking-wider uppercase font-serif-ethnic text-amber-200">
+                            SANGGAR SENI HARISMA
+                        </h1>
+                        <span class="text-[9px] sm:text-[10px] lg:text-xs font-extrabold px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/50 text-amber-300">
+                            SMKN 1 CIAMIS
+                        </span>
+                    </div>
+                    <p class="text-[10px] sm:text-xs text-zinc-300 font-medium mt-0.5">
+                        Lomba Memperingati HUT Harisma
+                    </p>
                 </div>
-                <p class="text-xs text-zinc-300 font-medium mt-0.5">
-                    Lomba Memperingati HUT Harisma
-                </p>
+            </div>
+
+            <!-- Mobile Quick Actions -->
+            <div class="flex lg:hidden items-center space-x-1.5">
+                <button @click="toggleFullscreen()" class="p-1.5 rounded-lg bg-[#121422] text-amber-300 border border-amber-500/20" title="Layar Penuh">
+                    <i data-lucide="maximize" class="w-3.5 h-3.5"></i>
+                </button>
+                <a href="{{ route('admin.dashboard') }}" class="px-2.5 py-1.5 rounded-lg bg-amber-500/20 text-amber-200 border border-amber-500/40 text-[11px] font-bold flex items-center space-x-1">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                    <span>Juri</span>
+                </a>
             </div>
         </div>
 
-        <!-- Category Navigation Tabs (Prominent & Easy to See from Distance) -->
-        <nav class="flex items-center space-x-2 bg-[#121422] p-1.5 rounded-xl border border-amber-500/20 shadow-inner">
+        <!-- Category Navigation Tabs (Horizontal Scrollable on Mobile) -->
+        <nav class="w-full lg:w-auto overflow-x-auto no-scrollbar flex items-center space-x-1.5 bg-[#121422] p-1 rounded-xl border border-amber-500/20 shadow-inner flex-nowrap scroll-smooth">
             @foreach($categories as $cat)
                 <button @click="switchCategory('{{ $cat->slug }}')"
                         :class="activeSlug === '{{ $cat->slug }}' 
                             ? 'bg-gradient-to-r from-amber-500/30 to-amber-600/30 text-amber-200 border-amber-400 font-black shadow-[0_0_15px_rgba(245,158,11,0.25)] scale-[1.02]' 
                             : 'text-zinc-400 hover:text-zinc-100 border-transparent hover:bg-white/5 font-bold'"
-                        class="px-4 py-2 rounded-lg text-xs md:text-sm border transition-all duration-150 flex items-center space-x-2">
-                    <i data-lucide="{{ $cat->icon }}" class="w-4 h-4 text-amber-400"></i>
+                        class="px-3 sm:px-4 py-1.5 rounded-lg text-xs border transition-all duration-150 flex items-center space-x-1.5 whitespace-nowrap flex-shrink-0">
+                    <i data-lucide="{{ $cat->icon }}" class="w-3.5 h-3.5 text-amber-400 flex-shrink-0"></i>
                     <span>{{ $cat->name }}</span>
                 </button>
             @endforeach
         </nav>
 
-        <!-- Right Side Widgets & Actions -->
-        <div class="flex items-center space-x-3">
+        <!-- Right Side Widgets & Actions (Desktop) -->
+        <div class="hidden lg:flex items-center space-x-3 flex-shrink-0">
             <!-- WIB Live Clock Widget -->
             <div class="flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-[#121422] border border-amber-500/20 text-xs md:text-sm text-amber-300 font-mono font-bold shadow-sm">
                 <i data-lucide="clock" class="w-4 h-4 text-amber-400"></i>
@@ -81,40 +102,42 @@
     </header>
 
     <!-- 2. Sub-Header Banner + Class Filter Tabs (Kelas X & Kelas XI) -->
-    <section class="relative z-20 max-w-7xl w-full mx-auto px-6 pt-2 pb-1 flex-shrink-0">
-        <div class="flex items-center justify-between border-b border-zinc-800/80 pb-2">
+    <section class="relative z-20 max-w-7xl w-full mx-auto px-4 sm:px-6 pt-2 pb-1 flex-shrink-0">
+        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-zinc-800/80 pb-2 gap-2">
             <div>
-                <h2 class="text-lg md:text-xl font-black font-serif-ethnic uppercase tracking-widest text-amber-200" x-text="categoryName.toUpperCase()"></h2>
+                <h2 class="text-base sm:text-lg md:text-xl font-black font-serif-ethnic uppercase tracking-widest text-amber-200" x-text="categoryName.toUpperCase()"></h2>
             </div>
 
             <!-- Dedicated Class Switcher Buttons -->
-            <div class="flex items-center space-x-1.5 bg-[#12141F] p-1 rounded-lg border border-zinc-800">
-                <span class="text-[11px] text-zinc-400 font-semibold px-1.5">Putar Kelas:</span>
-                <button @click="switchClass('Kelas X')"
-                        :class="selectedClass === 'Kelas X' 
-                            ? 'bg-amber-500 text-zinc-950 font-black border-amber-400' 
-                            : 'text-zinc-400 hover:text-white bg-transparent border-transparent'"
-                        class="px-3 py-1 rounded text-xs transition uppercase font-bold border flex items-center space-x-1">
-                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
-                    <span>Kelas X</span>
-                </button>
-                <button @click="switchClass('Kelas XI')"
-                        :class="selectedClass === 'Kelas XI' 
-                            ? 'bg-amber-500 text-zinc-950 font-black border-amber-400' 
-                            : 'text-zinc-400 hover:text-white bg-transparent border-transparent'"
-                        class="px-3 py-1 rounded text-xs transition uppercase font-bold border flex items-center space-x-1">
-                    <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
-                    <span>Kelas XI</span>
-                </button>
+            <div class="flex items-center space-x-1.5 bg-[#12141F] p-1 rounded-lg border border-zinc-800 w-full sm:w-auto justify-between sm:justify-start">
+                <span class="text-[10px] sm:text-[11px] text-zinc-400 font-semibold px-1">Putar Kelas:</span>
+                <div class="flex items-center space-x-1">
+                    <button @click="switchClass('Kelas X')"
+                            :class="selectedClass === 'Kelas X' 
+                                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 font-black border-amber-400 shadow-md' 
+                                : 'text-zinc-400 hover:text-white bg-transparent border-transparent font-bold'"
+                            class="px-2.5 sm:px-3 py-1 rounded text-xs transition uppercase font-bold border flex items-center space-x-1">
+                        <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+                        <span>Kelas X</span>
+                    </button>
+                    <button @click="switchClass('Kelas XI')"
+                            :class="selectedClass === 'Kelas XI' 
+                                ? 'bg-gradient-to-r from-amber-400 to-amber-500 text-zinc-950 font-black border-amber-400 shadow-md' 
+                                : 'text-zinc-400 hover:text-white bg-transparent border-transparent font-bold'"
+                            class="px-2.5 sm:px-3 py-1 rounded text-xs transition uppercase font-bold border flex items-center space-x-1">
+                        <i data-lucide="graduation-cap" class="w-3.5 h-3.5"></i>
+                        <span>Kelas XI</span>
+                    </button>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- 3. Main Stage Arena Grid -->
-    <main class="relative z-20 flex-1 max-w-7xl w-full mx-auto px-6 py-2 grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch overflow-hidden">
+    <main class="relative z-20 flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-2 grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-5 items-stretch min-h-0">
 
         <!-- LEFT BOX: RODA GILIRAN PENTAS (7 Cols) -->
-        <div class="lg:col-span-7 bg-[#0E1017] rounded-xl border border-zinc-800 p-4 relative shadow-xl flex flex-col justify-between items-center h-full overflow-hidden">
+        <div class="lg:col-span-7 bg-[#0E1017] rounded-xl border border-zinc-800 p-3.5 sm:p-4 relative shadow-xl flex flex-col justify-between items-center h-full min-h-[420px] lg:min-h-0 overflow-hidden">
             
             <!-- Traditional Gold Corner Trims (✦) -->
             <span class="absolute top-1.5 left-2 text-amber-500/60 text-xs font-serif">✦</span>
@@ -126,21 +149,21 @@
             <div class="w-full flex items-center justify-between flex-shrink-0">
                 <div class="flex items-center space-x-2">
                     <span class="text-amber-400 text-xs">✦</span>
-                    <h3 class="text-xs font-bold tracking-widest text-amber-200 uppercase font-serif-ethnic">
+                    <h3 class="text-[11px] sm:text-xs font-bold tracking-widest text-amber-200 uppercase font-serif-ethnic">
                         RODA GILIRAN PENTAS (<span x-text="selectedClass"></span>)
                     </h3>
                 </div>
-                <div class="px-2.5 py-0.5 rounded bg-[#141622] border border-zinc-800 text-xs text-amber-400 font-mono">
+                <div class="px-2 py-0.5 rounded bg-[#141622] border border-zinc-800 text-[10px] sm:text-xs text-amber-400 font-mono">
                     Putaran Ke- <span x-text="spinCount" class="font-bold text-white"></span>
                 </div>
             </div>
 
             <!-- Wheel Canvas Wrapper & Pointer -->
-            <div class="relative my-auto flex flex-col items-center justify-center flex-1">
+            <div class="relative my-auto flex flex-col items-center justify-center flex-1 py-2">
 
                 <!-- Pointer Pin -->
                 <div class="z-30 -mb-4 flex flex-col items-center filter drop-shadow-[0_4px_8px_rgba(0,0,0,0.9)]">
-                    <svg width="32" height="40" viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <svg width="28" height="36" sm:width="32" sm:height="40" viewBox="0 0 40 50" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M20 50 L4 18 C0 10 6 0 20 0 C34 0 40 10 36 18 L20 50 Z" fill="url(#goldPinGrad)" stroke="#FFE893" stroke-width="1.5"/>
                         <circle cx="20" cy="14" r="4.5" fill="#11131C" stroke="#D4AF37" stroke-width="1.5"/>
                         <defs>
@@ -155,14 +178,14 @@
 
                 <!-- Canvas Outer Gold Rim -->
                 <div class="p-1.5 rounded-full border-2 border-amber-500/40 bg-[#08090D] shadow-2xl relative flex items-center justify-center">
-                    <canvas id="wheelCanvas" width="380" height="380" class="max-w-[75vw] max-h-[34vh] md:max-w-[340px] md:max-h-[340px] lg:max-w-[360px] lg:max-h-[360px] rounded-full cursor-pointer transition-transform duration-300 hover:scale-[1.005]" @click="spin()"></canvas>
+                    <canvas id="wheelCanvas" width="380" height="380" class="w-[270px] h-[270px] sm:w-[320px] sm:h-[320px] lg:w-[360px] lg:h-[360px] max-w-full rounded-full cursor-pointer transition-transform duration-300 hover:scale-[1.005]" @click="spin()"></canvas>
 
                     <!-- Center Hub Button with Text "PUTAR" -->
                     <button @click="spin()" 
                             :disabled="isSpinning || items.length === 0"
-                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-16 h-16 md:w-18 md:h-18 rounded-full bg-gradient-to-b from-amber-400 via-yellow-500 to-amber-700 p-0.5 shadow-2xl hover:scale-105 active:scale-95 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-20 flex items-center justify-center border border-amber-300">
+                            class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 sm:w-16 sm:h-16 lg:w-18 lg:h-18 rounded-full bg-gradient-to-b from-amber-400 via-yellow-500 to-amber-700 p-0.5 shadow-2xl hover:scale-105 active:scale-95 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed z-20 flex items-center justify-center border border-amber-300">
                         <div class="w-full h-full rounded-full bg-[#0E1017] flex items-center justify-center border border-amber-500/50">
-                            <span class="text-[11px] font-black tracking-widest text-amber-200 uppercase font-mono" x-text="isSpinning ? 'PUTAR...' : 'PUTAR'"></span>
+                            <span class="text-[10px] sm:text-[11px] font-black tracking-widest text-amber-200 uppercase font-mono" x-text="isSpinning ? 'PUTAR...' : 'PUTAR'"></span>
                         </div>
                     </button>
                 </div>
@@ -172,14 +195,14 @@
             <div class="w-full mt-2 flex-shrink-0">
                 <button @click="spin()" 
                         :disabled="isSpinning || items.length === 0"
-                        class="w-full py-2.5 px-6 rounded bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs md:text-sm tracking-widest uppercase shadow-md active:scale-98 transition duration-200 disabled:opacity-50 flex items-center justify-center space-x-2 border border-amber-400">
+                        class="w-full py-2.5 sm:py-3 px-4 sm:px-6 rounded-xl bg-gradient-to-r from-amber-400 via-amber-500 to-amber-600 hover:from-amber-300 hover:to-amber-500 text-zinc-950 font-black text-xs sm:text-sm tracking-widest uppercase shadow-[0_0_20px_rgba(245,158,11,0.25)] active:scale-98 transition duration-200 disabled:opacity-50 flex items-center justify-center space-x-2 border border-amber-300">
                     <i data-lucide="play" class="w-4 h-4 fill-current"></i>
                     <span x-text="isSpinning ? 'MENGUNDI PESERTA ' + selectedClass.toUpperCase() + '...' : 'PUTAR RODA UNDIAN (' + selectedClass.toUpperCase() + ')'"></span>
                 </button>
             </div>
 
             <!-- Bottom Control Checkboxes -->
-            <div class="w-full flex items-center justify-between mt-2 px-1 text-[11px] text-zinc-400 border-t border-zinc-800 pt-2 flex-shrink-0">
+            <div class="w-full flex items-center justify-between mt-2 px-1 text-[10px] sm:text-[11px] text-zinc-400 border-t border-zinc-800 pt-2 flex-shrink-0">
                 <label class="flex items-center space-x-1.5 cursor-pointer hover:text-zinc-200">
                     <input type="checkbox" x-model="autoRemoveWinner" class="rounded bg-zinc-900 border-amber-500/40 text-amber-500 focus:ring-amber-500/50">
                     <span>Hapus peserta terpilih</span>
@@ -193,7 +216,7 @@
         </div>
 
         <!-- RIGHT BOX: URUTAN TAMPIL PESERTA (5 Cols) -->
-        <div class="lg:col-span-5 bg-[#0E1017] rounded-xl border border-zinc-800 p-4 relative shadow-xl flex flex-col justify-between h-full overflow-hidden">
+        <div class="lg:col-span-5 bg-[#0E1017] rounded-xl border border-zinc-800 p-3.5 sm:p-4 relative shadow-xl flex flex-col justify-between h-full min-h-[320px] lg:min-h-0 overflow-hidden">
             
             <!-- Traditional Gold Corner Trims (✦) -->
             <span class="absolute top-1.5 left-2 text-amber-500/60 text-xs font-serif">✦</span>
@@ -218,23 +241,23 @@
                     </div>
                 </div>
 
-                <!-- Action Bar Buttons (Master Combined Export & Print Buttons) -->
-                <div class="flex items-center justify-between space-x-1.5 mb-2 flex-shrink-0">
+                <!-- Action Bar Buttons -->
+                <div class="flex flex-wrap items-center justify-between gap-1.5 mb-2 flex-shrink-0">
                     <button @click="resetDrawnSequence()" 
-                            class="px-2 py-1.5 rounded bg-[#141622] hover:bg-zinc-800 border border-zinc-800 text-[11px] text-amber-300 font-semibold transition flex items-center space-x-1">
+                            class="px-2 py-1.5 rounded-lg bg-[#141622] hover:bg-zinc-800 border border-zinc-800 text-[10px] sm:text-[11px] text-amber-300 font-semibold transition flex items-center space-x-1">
                         <i data-lucide="rotate-ccw" class="w-3 h-3"></i>
                         <span>Acak Ulang</span>
                     </button>
                     
                     <div class="flex items-center space-x-1">
                         <button @click="printPDF()" 
-                                class="px-2.5 py-1.5 rounded bg-[#141622] hover:bg-amber-500/20 border border-amber-500/30 text-[11px] text-amber-300 font-bold transition flex items-center space-x-1">
+                                class="px-2 sm:px-2.5 py-1.5 rounded-lg bg-[#141622] hover:bg-amber-500/20 border border-amber-500/30 text-[10px] sm:text-[11px] text-amber-300 font-bold transition flex items-center space-x-1">
                             <i data-lucide="printer" class="w-3.5 h-3.5"></i>
                             <span>Cetak PDF</span>
                         </button>
 
                         <button @click="exportMasterCSV()" 
-                                class="px-2.5 py-1.5 rounded bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[11px] text-amber-300 font-bold transition flex items-center space-x-1 shadow-sm" title="Ekspor CSV Gabungan Selang-Seling X & XI">
+                                class="px-2 sm:px-2.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-[10px] sm:text-[11px] text-amber-300 font-bold transition flex items-center space-x-1 shadow-sm" title="Ekspor CSV Gabungan Selang-Seling X & XI">
                             <i data-lucide="download" class="w-3.5 h-3.5"></i>
                             <span>Ekspor Master CSV</span>
                         </button>
@@ -242,22 +265,22 @@
                 </div>
 
                 <!-- Harisma Shield Watermark Overlay + Sequence List -->
-                <div class="relative flex-1 overflow-y-auto pr-1 my-1 min-h-0">
+                <div class="relative flex-1 overflow-y-auto pr-1 my-1 min-h-[160px] lg:min-h-0">
                     
                     <!-- Clear Harisma Logo Watermark Overlay -->
-                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-25 z-0">
-                        <img src="{{ asset('images/logo-harisma.png') }}" alt="Harisma Watermark" class="w-64 h-64 object-contain filter drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]">
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 z-0">
+                        <img src="{{ asset('images/logo-harisma.png') }}" alt="Harisma Watermark" class="w-48 h-48 lg:w-64 lg:h-64 object-contain filter drop-shadow-[0_0_15px_rgba(212,175,55,0.4)]">
                     </div>
 
                     <!-- Empty State -->
-                    <div x-show="currentDrawnList.length === 0" class="relative z-10 flex flex-col items-center justify-center h-full text-center py-8">
-                        <div class="w-10 h-10 rounded-lg bg-[#141622] border border-zinc-800 flex items-center justify-center text-amber-400 mb-2.5 shadow-md">
+                    <div x-show="currentDrawnList.length === 0" class="relative z-10 flex flex-col items-center justify-center h-full text-center py-6">
+                        <div class="w-10 h-10 rounded-lg bg-[#141622] border border-zinc-800 flex items-center justify-center text-amber-400 mb-2 shadow-md">
                             <i data-lucide="list-ordered" class="w-5 h-5"></i>
                         </div>
                         <h4 class="text-xs font-bold uppercase tracking-widest text-amber-200">
                             BELUM ADA NOMOR TAMPIL
                         </h4>
-                        <p class="text-[11px] text-zinc-300 max-w-xs mt-1 leading-relaxed bg-[#141622]/80 p-2 rounded border border-zinc-800 backdrop-blur-sm">
+                        <p class="text-[11px] text-zinc-300 max-w-xs mt-1 leading-relaxed bg-[#141622]/80 p-2 rounded-lg border border-zinc-800 backdrop-blur-sm">
                             Tekan <span class="text-amber-300 font-bold">"PUTAR RODA UNDIAN"</span> untuk mengacak urutan tampil <span x-text="selectedClass"></span>.
                         </p>
                     </div>
@@ -265,7 +288,7 @@
                     <!-- Drawn Sequence List Items -->
                     <div x-show="currentDrawnList.length > 0" class="relative z-10 space-y-1.5">
                         <template x-for="(winner, idx) in currentDrawnList" :key="winner.id || idx">
-                            <div class="p-2 rounded bg-[#141622]/90 backdrop-blur-sm border border-zinc-800 flex items-center justify-between shadow-sm hover:border-amber-500/40 transition">
+                            <div class="p-2 rounded-lg bg-[#141622]/90 backdrop-blur-sm border border-zinc-800 flex items-center justify-between shadow-sm hover:border-amber-500/40 transition">
                                 <div class="flex items-center space-x-2.5 min-w-0">
                                     <div class="w-6 h-6 rounded font-mono font-black text-xs flex items-center justify-center bg-amber-500 text-zinc-950 flex-shrink-0 shadow-sm">
                                         <span x-text="idx + 1"></span>
@@ -313,7 +336,7 @@
          x-transition:leave-end="opacity-0 scale-95"
          class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
         
-        <div class="relative w-full max-w-md bg-[#0E1017] rounded-xl border border-amber-500/40 p-6 text-zinc-100 shadow-2xl space-y-4">
+        <div class="relative w-full max-w-md bg-[#0E1017] rounded-xl border border-amber-500/40 p-5 sm:p-6 text-zinc-100 shadow-2xl space-y-4">
             
             <div class="flex items-center justify-between pb-3 border-b border-zinc-800">
                 <div class="flex items-center space-x-2">
@@ -327,7 +350,7 @@
             </div>
 
             <div class="space-y-1">
-                <h3 class="text-lg font-bold font-serif-ethnic text-amber-200">
+                <h3 class="text-base sm:text-lg font-bold font-serif-ethnic text-amber-200">
                     Selamat & Semangat Lombanya! 🎉
                 </h3>
                 <p class="text-xs text-zinc-300 leading-relaxed">
@@ -352,14 +375,14 @@
             <!-- Action Buttons -->
             <div class="pt-2 flex items-center justify-end space-x-2">
                 <button @click="printPDF()" 
-                        class="px-3 py-2 rounded bg-[#141622] hover:bg-zinc-800 border border-zinc-800 text-xs text-amber-300 font-bold transition flex items-center space-x-1.5">
+                        class="px-3 py-2 rounded-lg bg-[#141622] hover:bg-zinc-800 border border-zinc-800 text-xs text-amber-300 font-bold transition flex items-center space-x-1.5">
                     <i data-lucide="printer" class="w-3.5 h-3.5"></i>
                     <span>Cetak PDF</span>
                 </button>
                 <button @click="exportMasterCSV()" 
-                        class="px-3 py-2 rounded bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs transition shadow-md flex items-center space-x-1.5">
+                        class="px-3 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-black text-xs transition shadow-md flex items-center space-x-1.5">
                     <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                    <span>Ekspor Master CSV (Acak X & XI)</span>
+                    <span>Ekspor Master CSV</span>
                 </button>
             </div>
         </div>
